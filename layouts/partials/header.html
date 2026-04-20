@@ -15,7 +15,17 @@
 <header>
   <div class="header-inner">
     <a class="logo" href="{{ "/" | relURL }}">
-      <span class="logo-icon">福</span>
+      <span class="logo-icon">
+        {{- if fileExists "static/images/logo.png" -}}
+          <img src="/images/logo.png" alt="logo">
+        {{- else if fileExists "static/images/logo.jpg" -}}
+          <img src="/images/logo.jpg" alt="logo">
+        {{- else if fileExists "static/images/logo.gif" -}}
+          <img src="/images/logo.gif" alt="logo">
+        {{- else -}}
+          福
+        {{- end -}}
+      </span>
       <span class="logo-text">{{ .Site.Title }}</span>
     </a>
     <nav>

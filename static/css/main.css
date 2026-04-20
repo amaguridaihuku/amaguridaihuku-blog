@@ -40,6 +40,11 @@ header {
   font-weight: 900; font-size: 18px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.logo-icon img {
+  width: 36px; height: 36px; object-fit: cover;
 }
 .logo-text { color: #fff; font-weight: 700; font-size: 15px; letter-spacing: .05em; }
 nav { display: flex; gap: 2px; }
