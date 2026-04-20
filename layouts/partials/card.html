@@ -8,10 +8,18 @@
 {{ if eq $cat "イベント参加情報" }}{{ $catClass = "event" }}{{ end }}
 {{ if eq $cat "同人誌販売情報" }}{{ $catClass = "sales" }}{{ end }}
 
+{{ $thumb := $post.Params.thumbnail }}
+{{ if not $thumb }}
+  {{ $imgMatches := findRE `src="(https?://[^"]+)"` $post.Content 1 }}
+  {{ if $imgMatches }}
+    {{ $thumb = replaceRE `src="([^"]+)"` "$1" (index $imgMatches 0) }}
+  {{ end }}
+{{ end }}
+
 <article class="card">
   <div class="card-thumb">
-    {{ with $post.Params.thumbnail }}
-      <img src="{{ . }}" alt="{{ $post.Title }}">
+    {{ if $thumb }}
+      <img src="{{ $thumb }}" alt="{{ $post.Title }}">
     {{ else }}
       <span class="card-thumb-label">{{ $cat }}</span>
     {{ end }}
