@@ -30,9 +30,7 @@
     </a>
     <nav>
       <a href="{{ "/" | relURL }}"{{ if .IsHome }} class="active"{{ end }}>HOME</a>
-      <a href="{{ "/categories/同人誌情報" | relURL }}"{{ if eq .Title "同人誌情報" }} class="active"{{ end }}>同人誌</a>
-      <a href="{{ "/categories/同人誌販売情報" | relURL }}"{{ if eq .Title "同人誌販売情報" }} class="active"{{ end }}>販売情報</a>
-      <a href="{{ "/categories/fanbox" | relURL }}"{{ if eq .Title "FANBOX" }} class="active"{{ end }}>FANBOX</a>
+      <a href="{{ "/categories/同人誌" | relURL }}"{{ if eq .Title "同人誌" }} class="active"{{ end }}>同人誌</a>
       <a href="{{ "/categories/漫画" | relURL }}"{{ if eq .Title "漫画" }} class="active"{{ end }}>漫画</a>
       <a href="{{ "/categories/イベント参加情報" | relURL }}"{{ if eq .Title "イベント参加情報" }} class="active"{{ end }}>イベント</a>
     </nav>

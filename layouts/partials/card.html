@@ -3,10 +3,9 @@
 {{ $cats := $post.Params.categories }}
 {{ $cat := index $cats 0 | default "" }}
 {{ $catClass := "" }}
-{{ if eq $cat "FANBOX" }}{{ $catClass = "fanbox" }}{{ end }}
 {{ if eq $cat "漫画" }}{{ $catClass = "manga" }}{{ end }}
+{{ if eq $cat "同人誌" }}{{ $catClass = "sales" }}{{ end }}
 {{ if eq $cat "イベント参加情報" }}{{ $catClass = "event" }}{{ end }}
-{{ if eq $cat "同人誌販売情報" }}{{ $catClass = "sales" }}{{ end }}
 
 {{ $thumb := $post.Params.thumbnail }}
 {{ if not $thumb }}

@@ -8,10 +8,9 @@
           <span>{{ .Date.Format "2006.01.02" }}</span>
           {{ range .Params.categories }}
             {{ $catClass := "" }}
-            {{ if eq . "FANBOX" }}{{ $catClass = "fanbox" }}{{ end }}
             {{ if eq . "漫画" }}{{ $catClass = "manga" }}{{ end }}
+            {{ if eq . "同人誌" }}{{ $catClass = "sales" }}{{ end }}
             {{ if eq . "イベント参加情報" }}{{ $catClass = "event" }}{{ end }}
-            {{ if eq . "同人誌販売情報" }}{{ $catClass = "sales" }}{{ end }}
             <span class="cat-badge {{ $catClass }}">{{ . }}</span>
           {{ end }}
           {{ if .Params.r18 }}<span class="card-r18" style="position:static;padding:3px 8px;">R-18</span>{{ end }}
