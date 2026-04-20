@@ -3,55 +3,68 @@ languageCode = "ja"
 title = "甘栗大福"
 defaultContentLanguage = "ja"
 hasCJKLanguage = true
-[pagination]
-  pagerSize = 10
 enableRobotsTXT = true
 summaryLength = 70
+
+[pagination]
+  pagerSize = 10
 
 [params]
   description    = "ゲイ向け同人誌サークル「甘栗大福」の活動記録ブログ"
   authorName     = "甘栗大福"
   authorNameEn   = "AMAGURI DAIFUKU"
   authorNick     = "ひげ大福"
-  authorBio      = "男の裸が好き！ゲイ向け成人BL漫画を描いています。"
-  heroLine1      = "好きなものは裸です。"
-  heroLine2Em    = "そういう漫画を、"
+  authorBio      = "同人誌を作っている個人サークル「甘栗大福」です。野暮ったい筋肉と情の厚いおじさん達の話を描きます。感想はX・Blueskyまでどうぞ。"
+  heroLine1      = "オトナのおじさん達、"
+  heroLine2Em    = "ゆっくりと、"
   heroLine2      = "描いています。"
   heroSub        = "ゲイ向け同人誌サークル「甘栗大福」の活動記録です。新刊情報・即売会・通販・FANBOX更新のお知らせをお届けします。"
+  goatcounterSite = "amaguridaihuku"
 
 [[params.socialLinks]]
   name = "X"
   url  = "https://x.com/hige_daihuku"
+
 [[params.socialLinks]]
   name = "BLSKY"
   url  = "https://bsky.app/profile/amaguridaihuku.bsky.social"
+
 [[params.socialLinks]]
   name = "PIXIV"
   url  = "https://www.pixiv.net/users/12567316"
+
 [[params.socialLinks]]
   name = "FANBOX"
   url  = "https://higedaihuku.fanbox.cc/"
+
 [[params.socialLinks]]
   name = "BOOTH"
   url  = "https://higedaihuku.booth.pm/"
+
 [[params.socialLinks]]
   name = "FANZA"
   url  = "https://lovecul.dmm.co.jp/bl/-/list/=/article=maker/id=226034/"
+
 [[params.socialLinks]]
   name = "DLSITE"
   url  = "https://www.dlsite.com/bl/circle/profile/=/maker_id/RG35952.html"
+
 [[params.socialLinks]]
   name = "FANTIA"
   url  = "https://fantia.jp/fanclubs/419253"
+
 [[params.socialLinks]]
   name = "DIGIKET"
   url  = "https://www.digiket.com/gachi/worklist/_data/ID=CIR0010675/"
+
 [[params.socialLinks]]
   name = "TORA"
   url  = "https://ec.toranoana.jp/joshi_r/ec/cot/circle/LUPAF26P8Y75dA60d687/all/"
+
 [[params.socialLinks]]
   name = "ALICE"
   url  = "https://alice-books.com/item/list/all?circle_id=6908"
+
 [[params.socialLinks]]
   name = "BIGGYM"
   url  = "https://www.biggym.co.jp/bg-online/all-doujinshi/"
