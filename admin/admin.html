@@ -284,6 +284,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
           <div class="md-toolbar-sep"></div>
           <button class="md-toolbar-btn" onclick="mdInsert('\n---\n','',true)" title="区切り線">―</button>
           <button class="md-toolbar-btn" onclick="mdGallery()" title="複数画像をギャラリーとして挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">🖼 ギャラリー</button>
+          <button class="md-toolbar-btn" onclick="mdDoujin()" title="表紙＋見本ページのプレビューを挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">📖 同人誌</button>
           <div class="md-toolbar-right">
             <button class="md-view-btn active" id="view-edit" onclick="setView('edit')">編集</button>
             <button class="md-view-btn" id="view-split" onclick="setView('split')">分割</button>
@@ -674,6 +675,63 @@ function mdImage() {
     }
   };
   input.click();
+}
+
+async function uploadOne(file) {
+  const fd = new FormData(); fd.append('file', file);
+  const res  = await fetch('/api/upload', {method:'POST', body:fd});
+  const json = await res.json();
+  return json.ok ? json.url : null;
+}
+
+async function pickFile(accept, multiple) {
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = accept;
+    if (multiple) input.multiple = true;
+    input.onchange = () => resolve(multiple ? Array.from(input.files) : input.files[0] || null);
+    input.oncancel  = () => resolve(multiple ? [] : null);
+    input.click();
+  });
+}
+
+async function mdDoujin() {
+  // ① 表紙を1枚選ぶ
+  toast('📖 表紙画像を選択してください', '#2f9aa0');
+  const coverFile = await pickFile('image/*', false);
+  if (!coverFile) return;
+  toast('⏳ 表紙をアップロード中…', '#888');
+  const coverUrl = await uploadOne(coverFile);
+  if (!coverUrl) { toast('❌ アップロード失敗', '#e03a3a'); return; }
+
+  // ② 見本ページを複数選ぶ
+  toast('📄 見本ページを選択してください（複数可・不要ならキャンセル）', '#2f9aa0');
+  const pageFiles = await pickFile('image/*', true);
+  let pageUrls = [];
+  if (pageFiles.length > 0) {
+    toast(`⏳ ${pageFiles.length}枚をアップロード中…`, '#888');
+    for (const f of pageFiles) {
+      const url = await uploadOne(f);
+      if (url) pageUrls.push(url);
+    }
+  }
+
+  // ③ HTML生成
+  let html = `\n<div class="doujin-preview">\n`;
+  html += `  <div class="doujin-cover-wrap">\n    <div class="doujin-cover-label">COVER</div>\n    <img src="${coverUrl}" alt="表紙">\n  </div>\n`;
+  if (pageUrls.length > 0) {
+    html += `  <div class="doujin-pages">\n`;
+    html += `    <div class="doujin-pages-label">SAMPLE PAGES <span>← スクロールして見る</span></div>\n`;
+    html += `    <div class="doujin-pages-track">\n`;
+    pageUrls.forEach((url, i) => { html += `      <img src="${url}" alt="サンプル${i+1}">\n`; });
+    html += `    </div>\n    <div class="doujin-pages-hint">${pageUrls.length} pages</div>\n  </div>\n`;
+  }
+  html += `</div>\n`;
+
+  const ta = document.getElementById('md-editor');
+  ta.setRangeText(html, ta.selectionStart, ta.selectionStart, 'end');
+  ta.focus(); onEditorInput();
+  toast(`✅ 同人誌プレビューを挿入しました（表紙1枚＋見本${pageUrls.length}枚）`, '#2f9aa0');
 }
 
 async function mdGallery() {

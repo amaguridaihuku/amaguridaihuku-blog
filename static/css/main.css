@@ -166,6 +166,53 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 .single-body p { margin-bottom: 1.4em; }
 .single-body img { max-width: 100%; height: auto; margin: 1.5em 0; display: block; }
 
+/* ── DOUJIN PREVIEW ── */
+.doujin-preview { margin: 2.5em 0; }
+.doujin-cover-wrap {
+  display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;
+}
+.doujin-cover-label {
+  font-size: 10px; font-weight: 900; letter-spacing: .2em; color: var(--accent);
+  text-transform: uppercase; margin-bottom: 12px;
+}
+.doujin-cover-wrap img {
+  max-width: 300px; width: 100%; height: auto; margin: 0; display: block;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.12), 10px 14px 32px rgba(0,0,0,.18);
+  transition: transform .3s, box-shadow .3s;
+}
+.doujin-cover-wrap img:hover {
+  transform: translateY(-4px) rotate(-1deg);
+  box-shadow: 6px 10px 0 rgba(0,0,0,.12), 14px 20px 40px rgba(0,0,0,.22);
+  cursor: zoom-in;
+}
+.doujin-pages {
+  background: #0f1117; padding: 20px 20px 14px; position: relative;
+}
+.doujin-pages-label {
+  font-size: 10px; font-weight: 900; letter-spacing: .18em;
+  color: rgba(255,255,255,.3); text-transform: uppercase; margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.doujin-pages-label span { color: rgba(255,255,255,.15); font-weight: 400; font-size: 10px; }
+.doujin-pages-track {
+  display: flex; gap: 8px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent;
+  padding-bottom: 10px; -webkit-overflow-scrolling: touch;
+}
+.doujin-pages-track::-webkit-scrollbar { height: 3px; }
+.doujin-pages-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
+.doujin-pages-track img {
+  height: 320px; width: auto; flex-shrink: 0; scroll-snap-align: start;
+  cursor: zoom-in; margin: 0; display: block;
+  transition: opacity .2s, transform .15s;
+}
+.doujin-pages-track img:hover { opacity: .88; transform: scale(1.02); }
+.doujin-pages-hint {
+  font-size: 10px; color: rgba(255,255,255,.18); text-align: right;
+  margin-top: 8px; letter-spacing: .06em;
+}
+
 /* ── GALLERY ── */
 .gallery {
   display: grid;
