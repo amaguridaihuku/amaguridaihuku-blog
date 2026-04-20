@@ -232,6 +232,15 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 .recent-title:hover { color: var(--accent); }
 .r18-widget { border-color: rgba(47,154,160,.35); background: rgba(47,154,160,.05); }
 .r18-widget p { font-size: 11px; color: var(--text-muted); line-height: 1.65; }
+.event-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.event-item { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.event-item:last-child { padding-bottom: 0; border-bottom: none; }
+.event-date { font-size: 11px; color: var(--accent); letter-spacing: .1em; font-weight: 700; }
+.event-name { font-size: 12px; font-weight: 900; margin: 3px 0; }
+.event-name a { transition: color .2s; }
+.event-name a:hover { color: var(--accent); }
+.event-meta { font-size: 11px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.event-space { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .05em; padding: 1px 6px; }
 
 /* ── FOOTER ── */
 footer {

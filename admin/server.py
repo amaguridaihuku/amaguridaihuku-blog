@@ -15,6 +15,7 @@ BLOG_ROOT   = Path(__file__).parent.parent
 POSTS_DIR   = BLOG_ROOT / "content" / "posts"
 IMAGES_DIR  = BLOG_ROOT / "static" / "images" / "posts"
 SETTINGS_F  = Path(__file__).parent / "settings.json"
+EVENTS_F    = BLOG_ROOT / "data" / "events.json"
 HUGO_TOML   = BLOG_ROOT / "hugo.toml"
 ADMIN_HTML  = Path(__file__).parent / "admin.html"
 PORT        = 8888
@@ -203,6 +204,12 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/settings":
             self._json(load_settings())
 
+        elif path == "/api/events":
+            if EVENTS_F.exists():
+                self._json(json.loads(EVENTS_F.read_text(encoding="utf-8")))
+            else:
+                self._json([])
+
         elif path.startswith("/images/"):
             # serve uploaded images
             img_path = BLOG_ROOT / "static" / path.lstrip("/")
@@ -255,6 +262,15 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"ok": True, "url": f"/images/posts/{name}"})
             else:
                 self._json({"error": "no file"}, 400)
+
+        elif path == "/api/events":
+            data = json.loads(self.rfile.read(length))
+            try:
+                EVENTS_F.parent.mkdir(parents=True, exist_ok=True)
+                EVENTS_F.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+                self._json({"ok": True})
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
 
         elif path == "/api/delete":
             body = json.loads(self.rfile.read(length))

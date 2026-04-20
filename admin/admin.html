@@ -144,6 +144,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
   <nav>
     <button class="active" onclick="showTab('posts')">📄 記事一覧</button>
     <button onclick="showTab('settings')">⚙️ サイト設定</button>
+    <button onclick="showTab('events')">📅 イベント</button>
   </nav>
   <div class="header-right">
     <button class="btn-preview" onclick="window.open('http://localhost:1313','_blank')">▶ プレビュー</button>
@@ -316,6 +317,20 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
     </div>
   </div>
 
+  <!-- EVENTS -->
+  <div class="editor" id="tab-events" style="display:none">
+    <div class="settings-panel">
+      <h2>イベント参加予定</h2>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:20px">サイドバーに表示される即売会・イベント情報を管理します。</p>
+      <div id="event-list" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px"></div>
+      <button class="btn-add" onclick="addEventRow()">＋ イベントを追加</button>
+      <div class="save-bar">
+        <button class="btn btn-save" onclick="saveEvents()">💾 イベントを保存</button>
+        <span class="save-status" id="events-status"></span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -344,8 +359,11 @@ function toast(msg, color='#222') {
 function showTab(name) {
   document.getElementById('tab-posts').style.display    = name === 'posts'    ? 'flex' : 'none';
   document.getElementById('tab-settings').style.display = name === 'settings' ? 'flex' : 'none';
+  document.getElementById('tab-events').style.display   = name === 'events'   ? 'flex' : 'none';
   document.getElementById('sidebar').style.display      = name === 'posts'    ? 'flex' : 'none';
-  document.querySelectorAll('nav button').forEach((b,i) => b.classList.toggle('active', (name==='posts'&&i===0)||(name==='settings'&&i===1)));
+  document.querySelectorAll('nav button').forEach((b,i) => b.classList.toggle('active',
+    (name==='posts'&&i===0)||(name==='settings'&&i===1)||(name==='events'&&i===2)));
+  if (name === 'events') loadEvents();
 }
 
 // ── Post List ──────────────────────────────────────────────────────────────
@@ -559,6 +577,68 @@ function renderSocialList(links) {
 function updateSocial(i, key, val) { if (settings.socialLinks) settings.socialLinks[i][key] = val; }
 function removeSocial(i) { settings.socialLinks.splice(i,1); renderSocialList(settings.socialLinks); }
 function addSocialRow() { if (!settings.socialLinks) settings.socialLinks=[]; settings.socialLinks.push({name:'',url:''}); renderSocialList(settings.socialLinks); }
+
+// ── Events ────────────────────────────────────────────────────────────────
+let events = [];
+
+async function loadEvents() {
+  const res = await fetch('/api/events');
+  events = await res.json();
+  renderEventList();
+}
+
+function renderEventList() {
+  document.getElementById('event-list').innerHTML = events.map((e,i) => `
+    <div style="border:1px solid var(--border);padding:14px;background:var(--bg-card)">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+        <div>
+          <label style="display:block;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">イベント名</label>
+          <input type="text" value="${e.name||''}" placeholder="COMITIA148" oninput="updateEvent(${i},'name',this.value)"
+            style="width:100%;border:1px solid var(--border);padding:6px 10px;font-size:13px;font-family:inherit;background:var(--bg);outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">日付</label>
+          <input type="date" value="${e.date||''}" oninput="updateEvent(${i},'date',this.value)"
+            style="width:100%;border:1px solid var(--border);padding:6px 10px;font-size:13px;font-family:inherit;background:var(--bg);outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">場所</label>
+          <input type="text" value="${e.place||''}" placeholder="東京ビッグサイト" oninput="updateEvent(${i},'place',this.value)"
+            style="width:100%;border:1px solid var(--border);padding:6px 10px;font-size:13px;font-family:inherit;background:var(--bg);outline:none">
+        </div>
+        <button class="btn-icon" onclick="removeEvent(${i})" style="margin-bottom:0">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="display:block;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">スペース番号</label>
+          <input type="text" value="${e.space||''}" placeholder="す-12a" oninput="updateEvent(${i},'space',this.value)"
+            style="width:100%;border:1px solid var(--border);padding:6px 10px;font-size:13px;font-family:inherit;background:var(--bg);outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">URL（任意）</label>
+          <input type="text" value="${e.url||''}" placeholder="https://..." oninput="updateEvent(${i},'url',this.value)"
+            style="width:100%;border:1px solid var(--border);padding:6px 10px;font-size:13px;font-family:inherit;background:var(--bg);outline:none">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function updateEvent(i, key, val) { events[i][key] = val; }
+function removeEvent(i) { events.splice(i, 1); renderEventList(); }
+function addEventRow() { events.push({name:'', date:'', place:'', space:'', url:''}); renderEventList(); }
+
+async function saveEvents() {
+  const res = await fetch('/api/events', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(events)});
+  const json = await res.json();
+  const st = document.getElementById('events-status');
+  if (json.ok) {
+    toast('✅ イベント情報を保存しました', '#2f9aa0');
+    st.textContent = '✅ 保存済み';
+    setTimeout(() => st.textContent='', 3000);
+  } else {
+    toast('❌ ' + json.error, '#e03a3a');
+  }
+}
 
 async function saveSettings() {
   settings.title       = document.getElementById('s-title').value;

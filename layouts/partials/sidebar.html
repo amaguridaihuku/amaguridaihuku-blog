@@ -19,6 +19,25 @@
     </div>
   </div>
 
+  <!-- Upcoming Events -->
+  {{ if .Site.Data.events }}
+  <div class="widget">
+    <div class="widget-title">UPCOMING EVENTS</div>
+    <ul class="event-list">
+      {{ range .Site.Data.events }}
+      <li class="event-item">
+        <div class="event-date">{{ dateFormat "2006.01.02" .date }}</div>
+        <div class="event-name">{{ if .url }}<a href="{{ .url }}" target="_blank" rel="noopener">{{ .name }}</a>{{ else }}{{ .name }}{{ end }}</div>
+        <div class="event-meta">
+          {{ if .place }}<span>📍 {{ .place }}</span>{{ end }}
+          {{ if .space }}<span class="event-space">{{ .space }}</span>{{ end }}
+        </div>
+      </li>
+      {{ end }}
+    </ul>
+  </div>
+  {{ end }}
+
   <!-- Categories -->
   <div class="widget">
     <div class="widget-title">CATEGORIES</div>
