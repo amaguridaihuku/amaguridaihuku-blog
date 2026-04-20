@@ -6,5 +6,9 @@
     <a href="/r18-policy">R-18 POLICY</a>
   </div>
 </footer>
+{{ if .Site.Params.goatcounterSite }}
+<script data-goatcounter="https://{{ .Site.Params.goatcounterSite }}.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+{{ end }}
 </body>
 </html>

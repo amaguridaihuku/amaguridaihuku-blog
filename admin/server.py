@@ -6,7 +6,8 @@
 """
 
 import json, os, re, cgi, io, mimetypes
-from datetime import datetime, timezone, timedelta
+import urllib.request, urllib.error
+from datetime import datetime, timezone, timedelta, date as dateobj
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -122,14 +123,19 @@ def _write_hugo_toml(s: dict):
     for l in s.get("socialLinks", []):
         links += f'\n[[params.socialLinks]]\n  name = "{l["name"]}"\n  url  = "{l["url"]}"\n'
 
+    gc_site = s.get("goatcounterSite", "")
+    gc_line = f'\n  goatcounterSite = "{gc_site}"' if gc_site else ""
+
     toml = f'''baseURL = "{s.get("baseURL","https://example.com/")}"
 languageCode = "ja"
 title = "{s.get("title","ブログ")}"
 defaultContentLanguage = "ja"
 hasCJKLanguage = true
-paginate = 10
 enableRobotsTXT = true
 summaryLength = 70
+
+[pagination]
+  pagerSize = 10
 
 [params]
   description    = "{s.get("description","")}"
@@ -141,6 +147,7 @@ summaryLength = 70
   heroLine2Em    = "{s.get("heroLine2Em","")}"
   heroLine2      = "{s.get("heroLine2","")}"
   heroSub        = "{s.get("heroSub","")}"
+{gc_line}
 {links}
 [taxonomies]
   category = "categories"
@@ -209,6 +216,31 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(json.loads(EVENTS_F.read_text(encoding="utf-8")))
             else:
                 self._json([])
+
+        elif path == "/api/analytics":
+            cfg = load_settings()
+            site  = cfg.get("goatcounterSite", "").strip()
+            token = cfg.get("goatcounterToken", "").strip()
+            if not site or not token:
+                self._json({"configured": False})
+                return
+            today = datetime.now(JST).date()
+            start = today - __import__("datetime").timedelta(days=6)
+            results = {"configured": True}
+            # daily hits per page (past 7 days)
+            for key, endpoint in [
+                ("pages", f"/api/v0/stats/hits?start={start}&end={today}&daily=true&limit=20"),
+            ]:
+                try:
+                    url = f"https://{site}.goatcounter.com{endpoint}"
+                    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+                    with urllib.request.urlopen(req, timeout=8) as r:
+                        results[key] = json.loads(r.read())
+                except urllib.error.HTTPError as e:
+                    results[key] = {"error": f"HTTP {e.code}: {e.reason}"}
+                except Exception as e:
+                    results[key] = {"error": str(e)}
+            self._json(results)
 
         elif path.startswith("/images/"):
             # serve uploaded images

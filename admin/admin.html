@@ -137,6 +137,36 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 /* ── Toast ── */
 .toast{position:fixed;bottom:24px;right:24px;background:#222;color:#fff;padding:10px 18px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
+
+/* ── Analytics ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);padding:20px;text-align:center}
+.stat-number{font-size:42px;font-weight:900;color:var(--accent);line-height:1}
+.stat-label{font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--muted);margin-top:6px;text-transform:uppercase}
+.chart-section{margin-bottom:28px}
+.chart{display:flex;gap:6px;align-items:flex-end;height:180px;padding-bottom:44px;position:relative}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;position:relative}
+.chart-count{font-size:10px;font-weight:700;color:var(--text);min-height:14px;text-align:center}
+.chart-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end}
+.chart-bar{width:100%;background:var(--accent);min-height:2px;transition:height .4s ease;border-radius:2px 2px 0 0;opacity:.85}
+.chart-col.today .chart-bar{opacity:1;background:var(--accent)}
+.chart-label{position:absolute;bottom:20px;font-size:11px;font-weight:700;color:var(--text)}
+.chart-date{position:absolute;bottom:4px;font-size:9px;color:var(--muted)}
+.pages-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.pages-table th{text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.pages-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.pages-table tr:hover td{background:var(--r)}
+.pages-table a{color:var(--accent);max-width:300px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.count-cell{text-align:right;font-weight:900;color:var(--accent);width:80px}
+.setup-box{background:rgba(47,154,160,.06);border:1px solid rgba(47,154,160,.25);padding:24px;margin-bottom:24px}
+.setup-box p{font-size:13px;line-height:1.7;margin-bottom:14px}
+.setup-steps{display:flex;flex-direction:column;gap:14px;margin:16px 0 20px}
+.setup-step{display:flex;gap:14px;align-items:flex-start}
+.setup-step-num{width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0;margin-top:1px}
+.setup-step-body strong{display:block;font-size:13px;margin-bottom:2px}
+.setup-step-body p{font-size:12px;color:var(--muted);margin:0}
+.setup-step-body a{color:var(--accent)}
+.analytics-loading{padding:60px;text-align:center;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
@@ -151,6 +181,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
     <button class="active" onclick="showTab('posts')">📄 記事一覧</button>
     <button onclick="showTab('settings')">⚙️ サイト設定</button>
     <button onclick="showTab('events')">📅 イベント</button>
+    <button onclick="showTab('analytics')">📊 アナリティクス</button>
   </nav>
   <div class="header-right">
     <button class="btn-preview" onclick="window.open('http://localhost:1313','_blank')">▶ プレビュー</button>
@@ -329,6 +360,26 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
       <div class="social-list" id="social-list"></div>
       <button class="btn-add" onclick="addSocialRow()">＋ リンクを追加</button>
 
+      <h2 id="s-analytics" style="margin-top:28px">アナリティクス（GoatCounter）</h2>
+      <div class="setup-box" style="margin-bottom:16px">
+        <p>無料の<strong>GoatCounter</strong>を使うと訪問者数・人気ページが「📊 アナリティクス」タブで確認できます。</p>
+        <div class="setup-steps">
+          <div class="setup-step"><div class="setup-step-num">1</div><div class="setup-step-body"><strong>アカウント登録（無料）</strong><p><a href="https://www.goatcounter.com/" target="_blank">goatcounter.com</a> で「Sign up」→ サイトコードを決める（例: amaguridaihuku）</p></div></div>
+          <div class="setup-step"><div class="setup-step-num">2</div><div class="setup-step-body"><strong>APIトークンを取得</strong><p>ログイン後 → Settings（右上アイコン）→ API → 「Create token」</p></div></div>
+          <div class="setup-step"><div class="setup-step-num">3</div><div class="setup-step-body"><strong>下の欄に入力して保存</strong><p>保存するとブログにも計測スクリプトが自動で追加されます</p></div></div>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <label>サイトコード</label>
+          <input type="text" id="s-goatcounterSite" placeholder="例: amaguridaihuku">
+        </div>
+        <div>
+          <label>APIトークン</label>
+          <input type="password" id="s-goatcounterToken" placeholder="GoatCounter API Token">
+        </div>
+      </div>
+
       <div class="save-bar">
         <button class="btn btn-save" onclick="saveSettings()">💾 設定を保存</button>
         <span class="save-status" id="settings-status"></span>
@@ -347,6 +398,13 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
         <button class="btn btn-save" onclick="saveEvents()">💾 イベントを保存</button>
         <span class="save-status" id="events-status"></span>
       </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div class="editor" id="tab-analytics" style="display:none">
+    <div class="settings-panel">
+      <div id="analytics-content"><div class="analytics-loading">読み込み中…</div></div>
     </div>
   </div>
 
@@ -376,13 +434,15 @@ function toast(msg, color='#222') {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────
 function showTab(name) {
-  document.getElementById('tab-posts').style.display    = name === 'posts'    ? 'flex' : 'none';
-  document.getElementById('tab-settings').style.display = name === 'settings' ? 'flex' : 'none';
-  document.getElementById('tab-events').style.display   = name === 'events'   ? 'flex' : 'none';
-  document.getElementById('sidebar').style.display      = name === 'posts'    ? 'flex' : 'none';
+  document.getElementById('tab-posts').style.display      = name === 'posts'     ? 'flex' : 'none';
+  document.getElementById('tab-settings').style.display   = name === 'settings'  ? 'flex' : 'none';
+  document.getElementById('tab-events').style.display     = name === 'events'    ? 'flex' : 'none';
+  document.getElementById('tab-analytics').style.display  = name === 'analytics' ? 'flex' : 'none';
+  document.getElementById('sidebar').style.display        = name === 'posts'     ? 'flex' : 'none';
   document.querySelectorAll('nav button').forEach((b,i) => b.classList.toggle('active',
-    (name==='posts'&&i===0)||(name==='settings'&&i===1)||(name==='events'&&i===2)));
-  if (name === 'events') loadEvents();
+    (name==='posts'&&i===0)||(name==='settings'&&i===1)||(name==='events'&&i===2)||(name==='analytics'&&i===3)));
+  if (name === 'events')    loadEvents();
+  if (name === 'analytics') loadAnalytics();
 }
 
 // ── Post List ──────────────────────────────────────────────────────────────
@@ -656,6 +716,8 @@ async function loadSettings() {
   document.getElementById('s-heroLine2').value   = settings.heroLine2 || '';
   document.getElementById('s-heroSub').value     = settings.heroSub || '';
   renderSocialList(settings.socialLinks || []);
+  document.getElementById('s-goatcounterSite').value  = settings.goatcounterSite  || '';
+  document.getElementById('s-goatcounterToken').value = settings.goatcounterToken || '';
 }
 
 function renderSocialList(links) {
@@ -733,6 +795,90 @@ async function saveEvents() {
   }
 }
 
+// ── Analytics ─────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  const el = document.getElementById('analytics-content');
+  el.innerHTML = '<div class="analytics-loading">データを取得中…</div>';
+  const res  = await fetch('/api/analytics');
+  const data = await res.json();
+
+  if (!data.configured) {
+    el.innerHTML = `
+      <h2>アナリティクス</h2>
+      <div class="setup-box">
+        <p>まだGoatCounterが設定されていません。<br>
+        <strong>⚙️ サイト設定</strong>タブの「アナリティクス」欄でサイトコードとAPIトークンを入力してください。</p>
+        <button class="btn btn-save" onclick="showTab('settings');setTimeout(()=>document.getElementById('s-analytics').scrollIntoView({behavior:'smooth'}),100)">設定を開く →</button>
+      </div>`;
+    return;
+  }
+
+  if (data.pages && data.pages.error) {
+    el.innerHTML = `<h2>アナリティクス</h2><div class="setup-box"><p>❌ GoatCounter API エラー: ${data.pages.error}<br>サイトコードとAPIトークンを確認してください。</p></div>`;
+    return;
+  }
+
+  const hits = (data.pages && data.pages.hits) || [];
+
+  // Build day map (aggregate across all pages)
+  const dayMap = {};
+  hits.forEach(page => {
+    (page.stats || []).forEach(s => {
+      dayMap[s.day] = (dayMap[s.day] || 0) + s.count;
+    });
+  });
+
+  // Last 7 days array
+  const DOW = ['日','月','火','水','木','金','土'];
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    days.push({key, label: DOW[d.getDay()], count: dayMap[key] || 0, isToday: i===0});
+  }
+  const todayCount = days[days.length-1].count;
+  const weekTotal  = days.reduce((s,d) => s+d.count, 0);
+  const maxCount   = Math.max(...days.map(d => d.count), 1);
+
+  // Top pages
+  const topPages = [...hits].sort((a,b) => b.count - a.count).slice(0,10);
+  const siteUrl  = (await (await fetch('/api/settings')).json()).baseURL || '';
+
+  el.innerHTML = `
+    <h2>アクセス統計（過去7日間）</h2>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-number">${todayCount}</div><div class="stat-label">今日</div></div>
+      <div class="stat-card"><div class="stat-number">${weekTotal}</div><div class="stat-label">7日間合計</div></div>
+      <div class="stat-card"><div class="stat-number">${hits.length}</div><div class="stat-label">ページ数</div></div>
+    </div>
+
+    <h2>日別アクセス</h2>
+    <div class="chart-section">
+      <div class="chart">
+        ${days.map(d => `
+          <div class="chart-col${d.isToday?' today':''}">
+            <div class="chart-count">${d.count||''}</div>
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:${Math.round(d.count/maxCount*100)}%"></div></div>
+            <div class="chart-label">${d.label}</div>
+            <div class="chart-date">${d.key.slice(5)}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <h2>よく見られているページ</h2>
+    <table class="pages-table">
+      <thead><tr><th>ページ</th><th style="text-align:right">表示回数</th></tr></thead>
+      <tbody>
+        ${topPages.length ? topPages.map(p => `
+          <tr>
+            <td><a href="${siteUrl.replace(/\/$/,'')}${p.path}" target="_blank" title="${p.path}">${p.title||p.path}</a></td>
+            <td class="count-cell">${p.count}</td>
+          </tr>`).join('') : '<tr><td colspan="2" style="padding:20px;text-align:center;color:var(--muted)">まだデータがありません</td></tr>'}
+      </tbody>
+    </table>
+  `;
+}
+
 async function saveSettings() {
   settings.title       = document.getElementById('s-title').value;
   settings.baseURL     = document.getElementById('s-url').value;
@@ -741,10 +887,12 @@ async function saveSettings() {
   settings.authorNameEn= document.getElementById('s-authorNameEn').value;
   settings.authorNick  = document.getElementById('s-authorNick').value;
   settings.authorBio   = document.getElementById('s-authorBio').value;
-  settings.heroLine1   = document.getElementById('s-heroLine1').value;
-  settings.heroLine2Em = document.getElementById('s-heroLine2Em').value;
-  settings.heroLine2   = document.getElementById('s-heroLine2').value;
-  settings.heroSub     = document.getElementById('s-heroSub').value;
+  settings.heroLine1        = document.getElementById('s-heroLine1').value;
+  settings.heroLine2Em      = document.getElementById('s-heroLine2Em').value;
+  settings.heroLine2        = document.getElementById('s-heroLine2').value;
+  settings.heroSub          = document.getElementById('s-heroSub').value;
+  settings.goatcounterSite  = document.getElementById('s-goatcounterSite').value.trim();
+  settings.goatcounterToken = document.getElementById('s-goatcounterToken').value.trim();
 
   const res = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(settings)});
   const json = await res.json();
