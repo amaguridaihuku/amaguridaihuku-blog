@@ -225,11 +225,11 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"configured": False})
                 return
             today = datetime.now(JST).date()
-            start = today - __import__("datetime").timedelta(days=6)
+            start = today - timedelta(days=29)
             results = {"configured": True}
-            # daily hits per page (past 7 days)
+            # daily hits per page (past 30 days)
             for key, endpoint in [
-                ("pages", f"/api/v0/stats/hits?start={start}&end={today}&daily=true&limit=20"),
+                ("pages", f"/api/v0/stats/hits?start={start}&end={today}&daily=true&limit=50"),
             ]:
                 try:
                     url = f"https://{site}.goatcounter.com{endpoint}"

@@ -828,16 +828,18 @@ async function loadAnalytics() {
     });
   });
 
-  // Last 7 days array
+  // Last 30 days array
   const DOW = ['日','月','火','水','木','金','土'];
   const days = [];
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 29; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0,10);
-    days.push({key, label: DOW[d.getDay()], count: dayMap[key] || 0, isToday: i===0});
+    const label = (i % 7 === 0 || i === 0) ? DOW[d.getDay()] : '';
+    days.push({key, label, count: dayMap[key] || 0, isToday: i===0});
   }
   const todayCount = days[days.length-1].count;
-  const weekTotal  = days.reduce((s,d) => s+d.count, 0);
+  const weekTotal  = days.slice(-7).reduce((s,d) => s+d.count, 0);
+  const monthTotal = days.reduce((s,d) => s+d.count, 0);
   const maxCount   = Math.max(...days.map(d => d.count), 1);
 
   // Top pages
@@ -845,22 +847,22 @@ async function loadAnalytics() {
   const siteUrl  = (await (await fetch('/api/settings')).json()).baseURL || '';
 
   el.innerHTML = `
-    <h2>アクセス統計（過去7日間）</h2>
+    <h2>アクセス統計（過去30日間）</h2>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-number">${todayCount}</div><div class="stat-label">今日</div></div>
-      <div class="stat-card"><div class="stat-number">${weekTotal}</div><div class="stat-label">7日間合計</div></div>
-      <div class="stat-card"><div class="stat-number">${hits.length}</div><div class="stat-label">ページ数</div></div>
+      <div class="stat-card"><div class="stat-number">${weekTotal}</div><div class="stat-label">直近7日</div></div>
+      <div class="stat-card"><div class="stat-number">${monthTotal}</div><div class="stat-label">30日間合計</div></div>
     </div>
 
-    <h2>日別アクセス</h2>
+    <h2>日別アクセス（過去30日）</h2>
     <div class="chart-section">
-      <div class="chart">
+      <div class="chart" style="gap:3px">
         ${days.map(d => `
           <div class="chart-col${d.isToday?' today':''}">
-            <div class="chart-count">${d.count||''}</div>
+            <div class="chart-count" style="font-size:9px">${d.count||''}</div>
             <div class="chart-bar-wrap"><div class="chart-bar" style="height:${Math.round(d.count/maxCount*100)}%"></div></div>
-            <div class="chart-label">${d.label}</div>
-            <div class="chart-date">${d.key.slice(5)}</div>
+            <div class="chart-label" style="font-size:10px">${d.label}</div>
+            <div class="chart-date" style="font-size:8px">${d.label ? d.key.slice(5) : ''}</div>
           </div>`).join('')}
       </div>
     </div>
