@@ -335,15 +335,97 @@ footer a { color: rgba(255,255,255,.4); }
 footer a:hover { color: var(--accent); }
 .footer-links { display: flex; gap: 20px; }
 
-/* ── RESPONSIVE ── */
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+
+/* ── タブレット（〜900px） ── */
 @media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  nav a { padding: 0 8px; font-size: 11px; }
-}
-@media (max-width: 600px) {
-  .card { grid-template-columns: 1fr; }
-  .card-thumb { min-height: 120px; }
-  .hero { height: 220px; }
+  /* ヘッダー */
+  .header-inner { padding: 0 16px; height: 52px; gap: 16px; }
+  nav { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  nav::-webkit-scrollbar { display: none; }
+  nav a { padding: 0 10px; font-size: 11px; height: 52px; white-space: nowrap; }
+  .logo-text { font-size: 13px; }
+
+  /* レイアウト：1カラムに */
+  .layout { grid-template-columns: 1fr; gap: 28px; }
+
+  /* サイドバー：非表示ではなく下に表示 */
+  .sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  /* R-18ウィジェットは全幅 */
+  .r18-widget { grid-column: 1 / -1; }
+
+  /* ヒーロー */
+  .hero { height: 240px; }
   .hero-content { padding: 0 24px 28px; }
+  .hero-bar  { left: 100px; }
+  .hero-bar2 { left: 110px; }
+
+  /* ページ余白 */
+  .page { padding: 24px 16px; }
+}
+
+/* ── スマホ（〜600px） ── */
+@media (max-width: 600px) {
+  /* ヘッダー */
+  .header-inner { height: 48px; padding: 0 12px; gap: 10px; }
+  nav a { padding: 0 8px; font-size: 10px; height: 48px; }
+  .logo-text { display: none; }  /* ロゴ文字は非表示、アイコンのみ */
+  .logo-icon { width: 30px; height: 30px; font-size: 15px; }
+
+  /* ヒーロー */
+  .hero { height: 200px; }
+  .hero-content { padding: 0 16px 22px; }
+  .hero-eyebrow { font-size: 9px; margin-bottom: 5px; }
+  .hero-title { font-size: clamp(18px, 5.5vw, 26px); }
+  .hero-sub { font-size: 11px; display: none; }  /* サブテキストは省略 */
+  .hero-bar  { left: 60px; }
+  .hero-bar2 { left: 68px; }
+
+  /* カード：縦積み */
+  .card { grid-template-columns: 1fr; }
+  .card-thumb { min-height: 160px; max-height: 220px; }
+  .card-body { padding: 14px 14px 14px; }
+  .card-title { font-size: 14px; }
+  .card-num { font-size: 18px; }
+
+  /* サイドバー：1カラム */
+  .sidebar { grid-template-columns: 1fr; }
+  .r18-widget { grid-column: auto; }
+  /* SNSリンク：3列 */
+  .social-grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* 記事本文 */
+  .page { padding: 16px 14px; }
+  .single-title { font-size: clamp(17px, 5vw, 26px); }
+  .single-body { font-size: 13px; }
+  .single-body h2 { font-size: 16px; }
+
+  /* 前後記事ナビ */
+  .post-nav { grid-template-columns: 1fr; gap: 10px; }
+
+  /* 同人誌プレビュー */
+  .doujin-pages-track img { height: 240px; }
+  .doujin-cover-wrap img { max-width: 240px; }
+
+  /* ページネーション */
+  .pagination a, .pagination span { width: 40px; height: 40px; font-size: 14px; }
+
+  /* フッター */
+  footer { flex-direction: column; align-items: flex-start; padding: 20px 16px; gap: 10px; }
+  .footer-links { flex-wrap: wrap; gap: 12px; }
+}
+
+/* ── 極小スマホ（〜380px） ── */
+@media (max-width: 380px) {
+  nav a { padding: 0 6px; font-size: 10px; }
+  .hero-title { font-size: 17px; }
+  .social-grid { grid-template-columns: repeat(3, 1fr); }
+  .card-thumb { max-height: 180px; }
+  .doujin-pages-track img { height: 200px; }
 }
