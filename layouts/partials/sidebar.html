@@ -11,7 +11,10 @@
     <p class="profile-desc">{{ .Site.Params.authorBio }}</p>
     <div class="social-grid">
       {{ range .Site.Params.socialLinks }}
-      <a class="social-btn" href="{{ .url }}" target="_blank" rel="noopener">{{ .name }}</a>
+      <a class="social-btn" href="{{ .url }}" target="_blank" rel="noopener">
+        {{ partial "social-icon.html" .name }}
+        <span>{{ .name }}</span>
+      </a>
       {{ end }}
     </div>
   </div>
