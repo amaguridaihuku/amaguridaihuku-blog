@@ -21,25 +21,25 @@ summaryLength = 70
 
 [[params.socialLinks]]
   name = "X"
-  url  = "https://x.com/"
+  url  = "https://x.com/hige_daihuku"
 [[params.socialLinks]]
   name = "BLSKY"
-  url  = "https://bsky.app/"
+  url  = "https://bsky.app/profile/amaguridaihuku.bsky.social"
 [[params.socialLinks]]
   name = "PIXIV"
-  url  = "https://pixiv.net/"
+  url  = "https://www.pixiv.net/users/12567316"
 [[params.socialLinks]]
   name = "FANBOX"
-  url  = "https://fanbox.cc/"
+  url  = "https://higedaihuku.fanbox.cc/"
 [[params.socialLinks]]
   name = "BOOTH"
   url  = "https://higedaihuku.booth.pm/"
 [[params.socialLinks]]
   name = "FANZA"
-  url  = "https://fanza.com/"
+  url  = "https://lovecul.dmm.co.jp/bl/-/list/=/article=maker/id=226034/"
 [[params.socialLinks]]
   name = "DLSITE"
-  url  = "https://dlsite.com/"
+  url  = "https://www.dlsite.com/bl/circle/profile/=/maker_id/RG35952.html"
 [[params.socialLinks]]
   name = "FANTIA"
   url  = "https://fantia.jp/fanclubs/419253"
