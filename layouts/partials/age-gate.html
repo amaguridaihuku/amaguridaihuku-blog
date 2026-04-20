@@ -1,0 +1,80 @@
+<div id="age-gate" style="display:none">
+  <div class="ag-overlay"></div>
+  <div class="ag-box">
+    <div class="ag-logo">
+      <span class="ag-logo-icon">
+        {{- if fileExists "static/images/logo.png" -}}<img src="/images/logo.png" alt="logo">
+        {{- else -}}福{{- end -}}
+      </span>
+      <span class="ag-logo-text">{{ .Site.Title }}</span>
+    </div>
+    <div class="ag-r18">R-18</div>
+    <p class="ag-title">このサイトは成人向けコンテンツを含みます</p>
+    <p class="ag-desc">ゲイ向け成人BL漫画・同人誌の情報を掲載しています。<br>18歳以上の方のみご入場ください。</p>
+    <div class="ag-btns">
+      <button class="ag-btn ag-yes" onclick="agEnter()">18歳以上です<br><small>入場する</small></button>
+      <button class="ag-btn ag-no"  onclick="agLeave()">18歳未満です<br><small>退場する</small></button>
+    </div>
+    <p class="ag-note">入場すると当サイトの利用規約に同意したとみなします。</p>
+  </div>
+</div>
+
+<style>
+#age-gate { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; }
+.ag-overlay { position:absolute; inset:0; background:#0f1117; opacity:.97; }
+.ag-box {
+  position:relative; z-index:1;
+  background:#16192a; border:1px solid rgba(47,154,160,.35);
+  padding:44px 40px 36px; max-width:420px; width:90%;
+  text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+.ag-logo { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:24px; }
+.ag-logo-icon {
+  width:36px; height:36px; background:#2f9aa0; color:#fff;
+  font-weight:900; font-size:18px; border-radius:4px;
+  display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;
+}
+.ag-logo-icon img { width:36px; height:36px; object-fit:cover; }
+.ag-logo-text { color:#fff; font-weight:700; font-size:16px; letter-spacing:.05em; }
+.ag-r18 {
+  display:inline-block; background:#e03a3a; color:#fff;
+  font-size:11px; font-weight:900; letter-spacing:.12em;
+  padding:3px 12px; margin-bottom:20px;
+}
+.ag-title { color:#fff; font-size:15px; font-weight:900; margin-bottom:12px; line-height:1.45; }
+.ag-desc { color:rgba(255,255,255,.5); font-size:12px; line-height:1.75; margin-bottom:28px; }
+.ag-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+.ag-btn {
+  border:none; padding:16px 12px; font-family:inherit; cursor:pointer;
+  font-size:13px; font-weight:900; line-height:1.4; transition:opacity .2s;
+}
+.ag-btn small { font-size:10px; font-weight:400; letter-spacing:.08em; opacity:.7; display:block; margin-top:3px; }
+.ag-btn:hover { opacity:.85; }
+.ag-yes { background:#2f9aa0; color:#fff; }
+.ag-no  { background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.12); }
+.ag-note { color:rgba(255,255,255,.22); font-size:10px; line-height:1.6; }
+@media(max-width:440px){
+  .ag-box { padding:32px 22px 28px; }
+  .ag-title { font-size:14px; }
+}
+</style>
+
+<script>
+(function(){
+  var KEY = 'ag_verified_v1';
+  if (localStorage.getItem(KEY) === '1') return; // 確認済み
+  document.getElementById('age-gate').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+})();
+function agEnter() {
+  localStorage.setItem('ag_verified_v1', '1');
+  var el = document.getElementById('age-gate');
+  el.style.opacity = '0';
+  el.style.transition = 'opacity .3s';
+  setTimeout(function(){ el.style.display = 'none'; }, 300);
+  document.body.style.overflow = '';
+}
+function agLeave() {
+  location.href = 'https://www.google.co.jp/';
+}
+</script>
