@@ -97,16 +97,22 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 
 /* ── Right: markdown editor ── */
 .md-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.md-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
-.md-tab{padding:8px 18px;font-size:11px;font-weight:700;letter-spacing:.08em;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted)}
-.md-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-#md-editor{flex:1;width:100%;border:none;padding:20px;font-size:13px;font-family:'Noto Sans JP',monospace;line-height:1.8;background:var(--bg);resize:none;outline:none}
-#md-preview{flex:1;padding:20px;overflow-y:auto;font-size:14px;line-height:1.9;display:none;background:#fff}
+.md-toolbar{display:flex;align-items:center;gap:2px;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0;flex-wrap:wrap}
+.md-toolbar-btn{border:1px solid transparent;background:none;color:var(--text);padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer;border-radius:3px;line-height:1;font-family:inherit;white-space:nowrap}
+.md-toolbar-btn:hover{background:var(--bg);border-color:var(--border);color:var(--accent)}
+.md-toolbar-sep{width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0}
+.md-toolbar-right{margin-left:auto;display:flex;gap:4px}
+.md-view-btn{border:1px solid var(--border);background:none;color:var(--muted);padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer}
+.md-view-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.md-body{flex:1;display:flex;overflow:hidden}
+#md-editor{flex:1;width:100%;border:none;border-right:1px solid var(--border);padding:20px;font-size:13px;font-family:'Noto Sans JP',monospace;line-height:1.8;background:var(--bg);resize:none;outline:none}
+#md-preview{flex:1;padding:20px;overflow-y:auto;font-size:14px;line-height:1.9;background:#fff}
 #md-preview img{max-width:100%}
 #md-preview h1,#md-preview h2,#md-preview h3{font-weight:900;margin:1.5em 0 .5em}
 #md-preview h2{border-left:3px solid var(--accent);padding-left:10px;font-size:17px}
 #md-preview p{margin-bottom:1.2em}
 #md-preview a{color:var(--accent)}
+#md-preview hr{border:none;border-top:1px solid var(--border);margin:1.5em 0}
 
 /* ── Settings panel ── */
 .settings-panel{flex:1;overflow-y:auto;padding:32px;max-width:780px}
@@ -181,11 +187,9 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
           <label>カテゴリ</label>
           <select id="post-cat">
             <option value="">── 選択 ──</option>
-            <option value="同人誌情報">同人誌情報</option>
-            <option value="同人誌販売情報">同人誌販売情報</option>
-            <option value="イベント参加情報">イベント参加情報</option>
-            <option value="FANBOX">FANBOX</option>
+            <option value="同人誌">同人誌</option>
             <option value="漫画">漫画</option>
+            <option value="イベント参加情報">イベント参加情報</option>
           </select>
         </div>
         <div class="field">
@@ -237,12 +241,27 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 
       <!-- Markdown editor -->
       <div class="md-panel">
-        <div class="md-tabs">
-          <button class="md-tab active" onclick="setMdTab('edit',this)">✏️ 編集</button>
-          <button class="md-tab" onclick="setMdTab('preview',this)">👁 プレビュー</button>
+        <div class="md-toolbar">
+          <button class="md-toolbar-btn" onclick="mdInsert('## ','',true)" title="見出し2">H2</button>
+          <button class="md-toolbar-btn" onclick="mdInsert('### ','',true)" title="見出し3">H3</button>
+          <div class="md-toolbar-sep"></div>
+          <button class="md-toolbar-btn" onclick="mdWrap('**','**')" title="太字"><b>B</b></button>
+          <button class="md-toolbar-btn" onclick="mdWrap('*','*')" title="斜体"><i>I</i></button>
+          <div class="md-toolbar-sep"></div>
+          <button class="md-toolbar-btn" onclick="mdLink()" title="リンク">🔗</button>
+          <button class="md-toolbar-btn" onclick="mdImage()" title="画像を挿入">🖼</button>
+          <div class="md-toolbar-sep"></div>
+          <button class="md-toolbar-btn" onclick="mdInsert('\n---\n','',true)" title="区切り線">―</button>
+          <div class="md-toolbar-right">
+            <button class="md-view-btn active" id="view-edit" onclick="setView('edit')">編集</button>
+            <button class="md-view-btn" id="view-split" onclick="setView('split')">分割</button>
+            <button class="md-view-btn" id="view-preview" onclick="setView('preview')">プレビュー</button>
+          </div>
         </div>
-        <textarea id="md-editor" placeholder="本文をここに書いてください（Markdown対応）"></textarea>
-        <div id="md-preview"></div>
+        <div class="md-body">
+          <textarea id="md-editor" placeholder="本文をここに書いてください（Markdown対応）&#10;&#10;## 見出し&#10;**太字** *斜体*" oninput="onEditorInput()"></textarea>
+          <div id="md-preview" style="display:none"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -514,21 +533,95 @@ function clearThumb() {
   setThumbPreview('');
 }
 
-// ── Markdown preview ──────────────────────────────────────────────────────
-function setMdTab(tab, btn) {
-  document.querySelectorAll('.md-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+// ── Markdown view modes ────────────────────────────────────────────────────
+let currentView = 'edit';
+
+function setView(mode) {
+  currentView = mode;
   const editor  = document.getElementById('md-editor');
   const preview = document.getElementById('md-preview');
-  if (tab === 'preview') {
-    editor.style.display  = 'none';
-    preview.style.display = 'block';
+  ['edit','split','preview'].forEach(m => document.getElementById('view-'+m).classList.toggle('active', m===mode));
+  if (mode === 'edit') {
+    editor.style.display  = 'block'; editor.style.flex = '1';
+    preview.style.display = 'none';
+  } else if (mode === 'split') {
+    editor.style.display  = 'block'; editor.style.flex = '1';
+    preview.style.display = 'block'; preview.style.flex = '1';
     preview.innerHTML = simpleMarkdown(editor.value);
   } else {
-    editor.style.display  = 'flex';
-    preview.style.display = 'none';
+    editor.style.display  = 'none';
+    preview.style.display = 'block'; preview.style.flex = '1';
+    preview.innerHTML = simpleMarkdown(editor.value);
   }
 }
+
+function onEditorInput() {
+  if (currentView === 'split') {
+    const editor  = document.getElementById('md-editor');
+    const preview = document.getElementById('md-preview');
+    preview.innerHTML = simpleMarkdown(editor.value);
+  }
+}
+
+// ── Markdown toolbar helpers ───────────────────────────────────────────────
+function mdInsert(before, after='', lineStart=false) {
+  const ta = document.getElementById('md-editor');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end);
+  let insert = lineStart
+    ? '\n' + before + sel + after
+    : before + sel + after;
+  ta.setRangeText(insert, start, end, 'select');
+  ta.focus();
+  onEditorInput();
+}
+
+function mdWrap(before, after) {
+  const ta = document.getElementById('md-editor');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end) || 'テキスト';
+  ta.setRangeText(before + sel + after, start, end, 'select');
+  ta.focus();
+  onEditorInput();
+}
+
+function mdLink() {
+  const ta = document.getElementById('md-editor');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end) || 'リンクテキスト';
+  const url = prompt('URLを入力', 'https://');
+  if (!url) return;
+  ta.setRangeText(`[${sel}](${url})`, start, end, 'end');
+  ta.focus();
+  onEditorInput();
+}
+
+function mdImage() {
+  // upload via hidden input, then insert markdown
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = async () => {
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const res  = await fetch('/api/upload', {method:'POST', body:fd});
+    const json = await res.json();
+    if (json.ok) {
+      const ta = document.getElementById('md-editor');
+      const pos = ta.selectionStart;
+      const md = `\n![](${json.url})\n`;
+      ta.setRangeText(md, pos, pos, 'end');
+      ta.focus();
+      onEditorInput();
+      toast('🖼 画像を挿入しました', '#2f9aa0');
+    }
+  };
+  input.click();
+}
+
+// Cmd/Ctrl + S で保存
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); savePost(); }
+});
 
 function simpleMarkdown(md) {
   return md
