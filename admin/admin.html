@@ -65,6 +65,8 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 .btn-save{background:var(--accent);color:#fff}
 .btn-del{background:none;border:1px solid var(--border);color:var(--muted)}
 .btn-del:hover{border-color:var(--danger);color:var(--danger)}
+.btn-dup{background:none;border:1px solid var(--accent);color:var(--accent)}
+.btn-dup:hover{background:rgba(47,154,160,.1)}
 
 .editor-body{flex:1;display:flex;overflow:hidden}
 
@@ -208,6 +210,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
   <div class="editor" id="tab-posts">
     <div class="editor-toolbar">
       <input type="text" id="post-title" placeholder="記事タイトルを入力…">
+      <button class="btn btn-dup" id="btn-dup" onclick="duplicatePost()" title="この記事の本文・カテゴリ・タグをコピーして新しい下書きを作成" style="display:none">📋 複製</button>
       <button class="btn btn-del" onclick="deletePost()">削除</button>
       <button class="btn btn-save" onclick="savePost()">💾 保存</button>
     </div>
@@ -490,6 +493,7 @@ async function loadPost(file) {
   const res = await fetch(`/api/post?file=${encodeURIComponent(file)}`);
   const p = await res.json();
   fillEditor(p);
+  document.getElementById('btn-dup').style.display = 'inline-flex';
   renderList(allPosts); // refresh active state
 }
 
@@ -512,7 +516,38 @@ function newPost() {
   const iso = jst.toISOString().replace('Z','+09:00').slice(0,19)+'+09:00';
   fillEditor({title:'', categories:[], tags:[], date:iso, r18:false, draft:true, body:'', thumbnail:''});
   document.getElementById('post-title').focus();
+  document.getElementById('btn-dup').style.display = 'none';
   document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
+}
+
+function duplicatePost() {
+  // スナップショットを取る（現在のエディタ内容をそのまま使う）
+  const cat   = document.getElementById('post-cat').value;
+  const tags  = document.getElementById('post-tags').value;
+  const r18   = document.getElementById('post-r18').checked;
+  const body  = document.getElementById('md-editor').value;
+
+  // 新規として開く（タイトル・日時・アイキャッチ・ファイルはリセット）
+  currentFile = null;
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9*3600*1000);
+  const iso = jst.toISOString().replace('Z','+09:00').slice(0,19)+'+09:00';
+
+  fillEditor({
+    title: '',
+    categories: cat ? [cat] : [],
+    tags: tags.split(',').map(t=>t.trim()).filter(Boolean),
+    date: iso,
+    r18,
+    draft: true,
+    body,
+    thumbnail: ''
+  });
+
+  document.getElementById('btn-dup').style.display = 'none';
+  document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('post-title').focus();
+  toast('📋 テンプレートとして複製しました。タイトルを入力して保存してください。', '#2f9aa0');
 }
 
 // ── Save Post ──────────────────────────────────────────────────────────────
