@@ -3,7 +3,8 @@ languageCode = "ja"
 title = "甘栗大福"
 defaultContentLanguage = "ja"
 hasCJKLanguage = true
-paginate = 10
+[pagination]
+  pagerSize = 10
 enableRobotsTXT = true
 summaryLength = 70
 
