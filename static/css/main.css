@@ -166,6 +166,8 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 .single-body p { margin-bottom: 1.4em; }
 .single-body img { max-width: 100%; height: auto; margin: 1.5em 0; display: block; }
 .single-body a { color: var(--accent); text-decoration: underline; }
+.single-body a.auto-link { font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--accent); padding-bottom: 1px; }
+.single-body a.auto-link:hover { background: var(--accent); color: #fff; border-color: var(--accent); padding: 0 3px; }
 .post-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 40px; }
 .post-nav a {
   background: var(--bg-card); border: 1px solid var(--border);
