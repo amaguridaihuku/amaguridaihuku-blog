@@ -1,4 +1,4 @@
-baseURL = "https://higedaihuku.com/"
+baseURL = "https://amaguridaihuku.com/"
 languageCode = "ja"
 title = "甘栗大福"
 defaultContentLanguage = "ja"
@@ -22,34 +22,39 @@ summaryLength = 70
 [[params.socialLinks]]
   name = "X"
   url  = "https://x.com/"
-
 [[params.socialLinks]]
   name = "BLSKY"
   url  = "https://bsky.app/"
-
 [[params.socialLinks]]
   name = "PIXIV"
   url  = "https://pixiv.net/"
-
 [[params.socialLinks]]
   name = "FANBOX"
   url  = "https://fanbox.cc/"
-
 [[params.socialLinks]]
   name = "BOOTH"
   url  = "https://higedaihuku.booth.pm/"
-
 [[params.socialLinks]]
   name = "FANZA"
   url  = "https://fanza.com/"
-
 [[params.socialLinks]]
   name = "DLSITE"
   url  = "https://dlsite.com/"
-
 [[params.socialLinks]]
-  name = "MISSKEY"
-  url  = "https://misskey.io/"
+  name = "FANTIA"
+  url  = "https://fantia.jp/fanclubs/419253"
+[[params.socialLinks]]
+  name = "DIGIKET"
+  url  = "https://www.digiket.com/gachi/worklist/_data/ID=CIR0010675/"
+[[params.socialLinks]]
+  name = "TORANO"
+  url  = "https://ec.toranoana.jp/joshi_r/ec/cot/circle/LUPAF26P8Y75dA60d687/all/"
+[[params.socialLinks]]
+  name = "ALICE"
+  url  = "https://alice-books.com/item/list/all?circle_id=6908"
+[[params.socialLinks]]
+  name = "BIGGYM"
+  url  = "https://www.biggym.co.jp/bg-online/all-doujinshi/"
 
 [taxonomies]
   category = "categories"
