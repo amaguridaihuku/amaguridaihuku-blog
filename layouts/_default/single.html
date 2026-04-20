@@ -25,6 +25,19 @@
         {{ .Content }}
       </div>
 
+      <script>
+      // Gallery lightbox
+      document.querySelectorAll('.gallery img').forEach(function(img){
+        img.addEventListener('click', function(){
+          var ov = document.createElement('div');
+          ov.className = 'lb-overlay';
+          ov.innerHTML = '<span class="lb-close">×</span><img src="'+img.src+'" alt="'+img.alt+'">';
+          ov.addEventListener('click', function(){ ov.remove(); });
+          document.body.appendChild(ov);
+        });
+      });
+      </script>
+
       {{ if in .Params.categories "漫画" }}
       {{ $fanboxURL := "" }}{{ $fantiaURL := "" }}
       {{ range .Site.Params.socialLinks }}

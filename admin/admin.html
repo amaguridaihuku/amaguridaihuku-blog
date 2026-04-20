@@ -283,6 +283,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
           <button class="md-toolbar-btn" onclick="mdImage()" title="画像を挿入">🖼</button>
           <div class="md-toolbar-sep"></div>
           <button class="md-toolbar-btn" onclick="mdInsert('\n---\n','',true)" title="区切り線">―</button>
+          <button class="md-toolbar-btn" onclick="mdGallery()" title="複数画像をギャラリーとして挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">🖼 ギャラリー</button>
           <div class="md-toolbar-right">
             <button class="md-view-btn active" id="view-edit" onclick="setView('edit')">編集</button>
             <button class="md-view-btn" id="view-split" onclick="setView('split')">分割</button>
@@ -657,7 +658,6 @@ function mdLink() {
 }
 
 function mdImage() {
-  // upload via hidden input, then insert markdown
   const input = document.createElement('input');
   input.type = 'file'; input.accept = 'image/*';
   input.onchange = async () => {
@@ -668,12 +668,35 @@ function mdImage() {
     if (json.ok) {
       const ta = document.getElementById('md-editor');
       const pos = ta.selectionStart;
-      const md = `\n![](${json.url})\n`;
-      ta.setRangeText(md, pos, pos, 'end');
-      ta.focus();
-      onEditorInput();
+      ta.setRangeText(`\n![](${json.url})\n`, pos, pos, 'end');
+      ta.focus(); onEditorInput();
       toast('🖼 画像を挿入しました', '#2f9aa0');
     }
+  };
+  input.click();
+}
+
+async function mdGallery() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
+  input.onchange = async () => {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    toast(`📷 ${files.length}枚をアップロード中…`, '#888');
+    const urls = [];
+    for (const file of files) {
+      const fd = new FormData(); fd.append('file', file);
+      const res  = await fetch('/api/upload', {method:'POST', body:fd});
+      const json = await res.json();
+      if (json.ok) urls.push(json.url);
+    }
+    if (!urls.length) return;
+    const html = `\n<div class="gallery">\n${urls.map(u=>`  <img src="${u}" alt="">`).join('\n')}\n</div>\n`;
+    const ta  = document.getElementById('md-editor');
+    const pos = ta.selectionStart;
+    ta.setRangeText(html, pos, pos, 'end');
+    ta.focus(); onEditorInput();
+    toast(`✅ ${urls.length}枚をギャラリーとして挿入しました`, '#2f9aa0');
   };
   input.click();
 }
