@@ -1,0 +1,39 @@
+{{ partial "header.html" . }}
+
+<main class="page">
+  <div class="layout">
+    <div>
+      <div class="section-head">
+        <h2>{{ .Title }}</h2>
+        <span>{{ len .Pages }} ARTICLES</span>
+      </div>
+      <div class="articles">
+        {{ range $i, $post := .Paginator.Pages }}
+          {{ partial "card.html" (dict "index" (add $i 1) "post" $post) }}
+        {{ end }}
+      </div>
+
+      {{ if gt .Paginator.TotalPages 1 }}
+      <div class="pagination">
+        {{ if .Paginator.HasPrev }}
+          <a href="{{ .Paginator.Prev.URL }}">←</a>
+        {{ else }}<span>←</span>{{ end }}
+        {{ range .Paginator.Pagers }}
+          {{ if eq . $.Paginator }}
+            <a class="active" href="{{ .URL }}">{{ .PageNumber }}</a>
+          {{ else if le (sub .PageNumber $.Paginator.PageNumber) 2 }}
+            <a href="{{ .URL }}">{{ .PageNumber }}</a>
+          {{ end }}
+        {{ end }}
+        {{ if .Paginator.HasNext }}
+          <a href="{{ .Paginator.Next.URL }}">→</a>
+        {{ else }}<span>→</span>{{ end }}
+      </div>
+      {{ end }}
+    </div>
+
+    {{ partial "sidebar.html" . }}
+  </div>
+</main>
+
+{{ partial "footer.html" . }}

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>管理画面 — 甘栗大福</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f4f0;--card:#fff;--border:#dddde8;
+  --text:#111118;--muted:#666677;
+  --accent:#2f9aa0;--accent2:#4dc2a5;
+  --hdr:#0f1117;--danger:#e03a3a;
+  --r:#eef9f9;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;height:100vh;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+
+/* ── Header ── */
+header{background:var(--hdr);display:flex;align-items:center;padding:0 24px;height:52px;gap:24px;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;background:var(--accent);color:#fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:3px}
+.logo-text{color:#fff;font-weight:700;font-size:14px}
+.badge{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:10px;padding:2px 8px;letter-spacing:.1em}
+nav{display:flex;gap:2px;margin-left:8px}
+nav button{background:none;border:none;color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.08em;padding:0 16px;height:52px;border-bottom:3px solid transparent;transition:all .2s}
+nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
+.header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-preview{background:var(--accent);color:#fff;border:none;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.08em}
+.btn-preview:hover{opacity:.85}
+
+/* ── Layout ── */
+.app{display:flex;flex:1;overflow:hidden}
+
+/* ── Sidebar (post list) ── */
+.sidebar{width:300px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-head h2{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.btn-new{background:var(--accent);color:#fff;border:none;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.06em}
+.search-box{padding:10px 16px;border-bottom:1px solid var(--border)}
+.search-box input{width:100%;border:1px solid var(--border);background:var(--bg);padding:6px 10px;font-size:12px;font-family:inherit;outline:none}
+.search-box input:focus{border-color:var(--accent)}
+.post-list{flex:1;overflow-y:auto}
+.post-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:10px;align-items:flex-start}
+.post-item:hover{background:var(--r)}
+.post-item.active{background:rgba(47,154,160,.08);border-left:3px solid var(--accent)}
+.post-thumb{width:48px;height:48px;object-fit:cover;flex-shrink:0;background:#dde0e8;display:flex;align-items:center;justify-content:center;font-size:9px;color:#aaa;text-align:center}
+.post-thumb img{width:48px;height:48px;object-fit:cover}
+.post-info{flex:1;min-width:0}
+.post-title-row{font-size:12px;font-weight:700;line-height:1.35;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.post-meta-row{display:flex;gap:6px;align-items:center}
+.post-date{font-size:10px;color:var(--muted)}
+.cat-dot{font-size:9px;padding:1px 6px;color:#fff;font-weight:700}
+.draft-badge{font-size:9px;padding:1px 5px;background:#f0a500;color:#fff;font-weight:700}
+
+/* ── Main editor ── */
+.editor{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.editor-toolbar{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--card);flex-shrink:0}
+.editor-toolbar input[type=text]{flex:1;border:1px solid var(--border);padding:8px 12px;font-size:16px;font-weight:700;font-family:inherit;outline:none;background:var(--bg)}
+.editor-toolbar input:focus{border-color:var(--accent)}
+.btn{border:none;padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;transition:opacity .2s}
+.btn:hover{opacity:.8}
+.btn-save{background:var(--accent);color:#fff}
+.btn-del{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-del:hover{border-color:var(--danger);color:var(--danger)}
+
+.editor-body{flex:1;display:flex;overflow:hidden}
+
+/* ── Left: meta + upload ── */
+.meta-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.field label{display:block;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field select,.field input[type=text],.field input[type=date]{width:100%;border:1px solid var(--border);padding:7px 10px;font-size:12px;font-family:inherit;background:var(--bg);outline:none}
+.field select:focus,.field input:focus{border-color:var(--accent)}
+.field textarea{width:100%;border:1px solid var(--border);padding:7px 10px;font-size:12px;font-family:inherit;background:var(--bg);outline:none;resize:none;height:60px}
+.field textarea:focus{border-color:var(--accent)}
+.toggle-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:10px;transition:.2s}
+.toggle input:checked+.toggle-track{background:var(--accent)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked~.toggle-thumb{left:18px}
+
+/* Image upload */
+.upload-area{border:2px dashed var(--border);padding:14px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.upload-area:hover,.upload-area.drag{border-color:var(--accent);background:var(--r)}
+.upload-area img{max-width:100%;max-height:120px;object-fit:contain}
+.upload-area .upload-hint{font-size:11px;color:var(--muted)}
+.upload-area .upload-hint strong{display:block;font-size:13px;color:var(--accent);margin-bottom:2px}
+#upload-input{display:none}
+.thumb-actions{display:flex;gap:6px;margin-top:6px}
+.btn-sm{border:none;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer}
+.btn-sm.primary{background:var(--accent);color:#fff}
+.btn-sm.danger{background:var(--danger);color:#fff}
+
+/* ── Right: markdown editor ── */
+.md-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.md-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.md-tab{padding:8px 18px;font-size:11px;font-weight:700;letter-spacing:.08em;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted)}
+.md-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+#md-editor{flex:1;width:100%;border:none;padding:20px;font-size:13px;font-family:'Noto Sans JP',monospace;line-height:1.8;background:var(--bg);resize:none;outline:none}
+#md-preview{flex:1;padding:20px;overflow-y:auto;font-size:14px;line-height:1.9;display:none;background:#fff}
+#md-preview img{max-width:100%}
+#md-preview h1,#md-preview h2,#md-preview h3{font-weight:900;margin:1.5em 0 .5em}
+#md-preview h2{border-left:3px solid var(--accent);padding-left:10px;font-size:17px}
+#md-preview p{margin-bottom:1.2em}
+#md-preview a{color:var(--accent)}
+
+/* ── Settings panel ── */
+.settings-panel{flex:1;overflow-y:auto;padding:32px;max-width:780px}
+.settings-panel h2{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;border-left:3px solid var(--accent);padding-left:10px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+.settings-grid .full{grid-column:1/-1}
+.settings-panel label{display:block;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.settings-panel input[type=text],.settings-panel textarea{width:100%;border:1px solid var(--border);padding:8px 12px;font-size:13px;font-family:inherit;background:var(--bg);outline:none}
+.settings-panel input:focus,.settings-panel textarea:focus{border-color:var(--accent)}
+.settings-panel textarea{resize:vertical;min-height:70px}
+.social-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.social-row{display:grid;grid-template-columns:80px 1fr 28px;gap:6px;align-items:center}
+.social-row input{border:1px solid var(--border);padding:5px 8px;font-size:12px;font-family:inherit;background:var(--bg);width:100%;outline:none}
+.social-row input:focus{border-color:var(--accent)}
+.btn-icon{border:1px solid var(--border);background:none;color:var(--muted);width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.btn-icon:hover{border-color:var(--danger);color:var(--danger)}
+.btn-add{background:none;border:1px dashed var(--border);padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700;letter-spacing:.06em}
+.btn-add:hover{border-color:var(--accent);color:var(--accent)}
+.save-bar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--border);padding:14px 0;display:flex;gap:10px;align-items:center}
+.save-status{font-size:12px;color:var(--accent);font-weight:700}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#222;color:#fff;padding:10px 18px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-icon">福</span>
+    <span class="logo-text">甘栗大福</span>
+  </div>
+  <span class="badge">管理画面</span>
+  <nav>
+    <button class="active" onclick="showTab('posts')">📄 記事一覧</button>
+    <button onclick="showTab('settings')">⚙️ サイト設定</button>
+  </nav>
+  <div class="header-right">
+    <button class="btn-preview" onclick="window.open('http://localhost:1313','_blank')">▶ プレビュー</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <h2>記事一覧</h2>
+      <button class="btn-new" onclick="newPost()">＋ 新規投稿</button>
+    </div>
+    <div class="search-box">
+      <input type="text" id="search" placeholder="タイトルで絞り込み…" oninput="filterPosts()">
+    </div>
+    <div class="post-list" id="post-list">
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">読み込み中…</div>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor" id="tab-posts">
+    <div class="editor-toolbar">
+      <input type="text" id="post-title" placeholder="記事タイトルを入力…">
+      <button class="btn btn-del" onclick="deletePost()">削除</button>
+      <button class="btn btn-save" onclick="savePost()">💾 保存</button>
+    </div>
+    <div class="editor-body">
+      <!-- Meta panel -->
+      <div class="meta-panel">
+        <div class="field">
+          <label>カテゴリ</label>
+          <select id="post-cat">
+            <option value="">── 選択 ──</option>
+            <option value="同人誌情報">同人誌情報</option>
+            <option value="同人誌販売情報">同人誌販売情報</option>
+            <option value="イベント参加情報">イベント参加情報</option>
+            <option value="FANBOX">FANBOX</option>
+            <option value="漫画">漫画</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>タグ（カンマ区切り）</label>
+          <input type="text" id="post-tags" placeholder="例: 新刊, COMITIA, 通販">
+        </div>
+        <div class="field">
+          <label>投稿日時</label>
+          <input type="text" id="post-date" placeholder="2026-04-19T10:00:00+09:00">
+        </div>
+        <div class="field">
+          <label style="margin-bottom:8px">アイキャッチ画像</label>
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('upload-input').click()" ondragover="onDragOver(event)" ondrop="onDrop(event)">
+            <div id="thumb-preview" style="display:none;width:100%;text-align:center">
+              <img id="thumb-img" src="" alt="thumbnail">
+              <div class="thumb-actions">
+                <button class="btn-sm primary" onclick="event.stopPropagation();document.getElementById('upload-input').click()">変更</button>
+                <button class="btn-sm danger" onclick="event.stopPropagation();clearThumb()">削除</button>
+              </div>
+            </div>
+            <div id="upload-placeholder">
+              <div class="upload-hint"><strong>📷 画像をドロップ</strong>またはクリックして選択</div>
+            </div>
+          </div>
+          <input type="file" id="upload-input" accept="image/*" onchange="uploadFile(this.files[0])">
+          <input type="hidden" id="post-thumbnail">
+        </div>
+        <div class="field">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="post-r18">
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            R-18 フラグ
+          </div>
+        </div>
+        <div class="field">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="post-draft">
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            下書き（非公開）
+          </div>
+        </div>
+      </div>
+
+      <!-- Markdown editor -->
+      <div class="md-panel">
+        <div class="md-tabs">
+          <button class="md-tab active" onclick="setMdTab('edit',this)">✏️ 編集</button>
+          <button class="md-tab" onclick="setMdTab('preview',this)">👁 プレビュー</button>
+        </div>
+        <textarea id="md-editor" placeholder="本文をここに書いてください（Markdown対応）"></textarea>
+        <div id="md-preview"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="editor" id="tab-settings" style="display:none">
+    <div class="settings-panel">
+      <h2>基本設定</h2>
+      <div class="settings-grid">
+        <div>
+          <label>サイト名</label>
+          <input type="text" id="s-title">
+        </div>
+        <div>
+          <label>サイトURL</label>
+          <input type="text" id="s-url" placeholder="https://example.com/">
+        </div>
+        <div class="full">
+          <label>サイト説明文</label>
+          <input type="text" id="s-desc">
+        </div>
+      </div>
+
+      <h2>プロフィール</h2>
+      <div class="settings-grid">
+        <div>
+          <label>名前（日本語）</label>
+          <input type="text" id="s-authorName">
+        </div>
+        <div>
+          <label>名前（英語）</label>
+          <input type="text" id="s-authorNameEn">
+        </div>
+        <div>
+          <label>ニックネーム</label>
+          <input type="text" id="s-authorNick">
+        </div>
+        <div class="full">
+          <label>自己紹介文</label>
+          <textarea id="s-authorBio"></textarea>
+        </div>
+      </div>
+
+      <h2>ヒーロー（トップページ大見出し）</h2>
+      <div class="settings-grid">
+        <div class="full">
+          <label>1行目</label>
+          <input type="text" id="s-heroLine1">
+        </div>
+        <div>
+          <label>2行目（アクセント部分）</label>
+          <input type="text" id="s-heroLine2Em">
+        </div>
+        <div>
+          <label>2行目（続き）</label>
+          <input type="text" id="s-heroLine2">
+        </div>
+        <div class="full">
+          <label>サブテキスト</label>
+          <textarea id="s-heroSub"></textarea>
+        </div>
+      </div>
+
+      <h2>SNS・販売サイトリンク</h2>
+      <div class="social-list" id="social-list"></div>
+      <button class="btn-add" onclick="addSocialRow()">＋ リンクを追加</button>
+
+      <div class="save-bar">
+        <button class="btn btn-save" onclick="saveSettings()">💾 設定を保存</button>
+        <span class="save-status" id="settings-status"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let allPosts = [];
+let currentFile = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadPosts();
+  loadSettings();
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg, color='#222') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.getElementById('tab-posts').style.display    = name === 'posts'    ? 'flex' : 'none';
+  document.getElementById('tab-settings').style.display = name === 'settings' ? 'flex' : 'none';
+  document.getElementById('sidebar').style.display      = name === 'posts'    ? 'flex' : 'none';
+  document.querySelectorAll('nav button').forEach((b,i) => b.classList.toggle('active', (name==='posts'&&i===0)||(name==='settings'&&i===1)));
+}
+
+// ── Post List ──────────────────────────────────────────────────────────────
+const CAT_COLORS = {'同人誌情報':'#2f9aa0','同人誌販売情報':'#2fa05c','イベント参加情報':'#2f6ae0','FANBOX':'#9c5cf5','漫画':'#e07c2f'};
+
+async function loadPosts() {
+  const res = await fetch('/api/posts');
+  allPosts = await res.json();
+  renderList(allPosts);
+}
+
+function renderList(posts) {
+  const el = document.getElementById('post-list');
+  if (!posts.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">記事がありません</div>'; return; }
+  el.innerHTML = posts.map(p => {
+    const cat = (p.categories||[])[0] || '';
+    const color = CAT_COLORS[cat] || '#888';
+    const thumb = p.thumbnail
+      ? `<img src="${p.thumbnail}" alt="">`
+      : `<div style="width:48px;height:48px;background:#dde0e8;display:flex;align-items:center;justify-content:center;font-size:9px;color:#aaa;text-align:center;flex-shrink:0">${cat||'記事'}</div>`;
+    return `<div class="post-item${p.file===currentFile?' active':''}" onclick="loadPost('${p.file}')">
+      <div class="post-thumb">${thumb}</div>
+      <div class="post-info">
+        <div class="post-title-row">${p.title||p.file}</div>
+        <div class="post-meta-row">
+          <span class="post-date">${(p.date||'').slice(0,10)}</span>
+          ${cat?`<span class="cat-dot" style="background:${color}">${cat}</span>`:''}
+          ${p.draft?'<span class="draft-badge">下書き</span>':''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterPosts() {
+  const q = document.getElementById('search').value.toLowerCase();
+  renderList(q ? allPosts.filter(p => (p.title||'').toLowerCase().includes(q)) : allPosts);
+}
+
+// ── Load / Edit Post ──────────────────────────────────────────────────────
+async function loadPost(file) {
+  currentFile = file;
+  const res = await fetch(`/api/post?file=${encodeURIComponent(file)}`);
+  const p = await res.json();
+  fillEditor(p);
+  renderList(allPosts); // refresh active state
+}
+
+function fillEditor(p) {
+  document.getElementById('post-title').value     = p.title || '';
+  document.getElementById('post-cat').value       = (p.categories||[])[0] || '';
+  document.getElementById('post-tags').value      = (p.tags||[]).join(', ');
+  document.getElementById('post-date').value      = p.date || '';
+  document.getElementById('post-r18').checked     = !!p.r18;
+  document.getElementById('post-draft').checked   = !!p.draft;
+  document.getElementById('md-editor').value      = p.body || '';
+  document.getElementById('post-thumbnail').value = p.thumbnail || '';
+  setThumbPreview(p.thumbnail || '');
+}
+
+function newPost() {
+  currentFile = null;
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9*3600*1000);
+  const iso = jst.toISOString().replace('Z','+09:00').slice(0,19)+'+09:00';
+  fillEditor({title:'', categories:[], tags:[], date:iso, r18:false, draft:true, body:'', thumbnail:''});
+  document.getElementById('post-title').focus();
+  document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
+}
+
+// ── Save Post ──────────────────────────────────────────────────────────────
+async function savePost() {
+  const title = document.getElementById('post-title').value.trim();
+  if (!title) { toast('タイトルを入力してください', '#e03a3a'); return; }
+  const cat   = document.getElementById('post-cat').value;
+  const tags  = document.getElementById('post-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data  = {
+    file:       currentFile,
+    title,
+    date:       document.getElementById('post-date').value,
+    draft:      document.getElementById('post-draft').checked,
+    r18:        document.getElementById('post-r18').checked,
+    categories: cat ? [cat] : [],
+    tags,
+    thumbnail:  document.getElementById('post-thumbnail').value,
+    body:       document.getElementById('md-editor').value,
+  };
+  const res = await fetch('/api/post', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const json = await res.json();
+  if (json.ok) {
+    currentFile = json.file;
+    toast('✅ 保存しました', '#2f9aa0');
+    await loadPosts();
+    renderList(allPosts);
+  } else {
+    toast('❌ ' + json.error, '#e03a3a');
+  }
+}
+
+// ── Delete Post ───────────────────────────────────────────────────────────
+async function deletePost() {
+  if (!currentFile) return;
+  if (!confirm(`「${document.getElementById('post-title').value}」を削除しますか？`)) return;
+  const res = await fetch('/api/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({file:currentFile})});
+  const json = await res.json();
+  if (json.ok) {
+    toast('🗑 削除しました');
+    currentFile = null;
+    newPost();
+    await loadPosts();
+  }
+}
+
+// ── Image Upload ──────────────────────────────────────────────────────────
+function onDragOver(e) { e.preventDefault(); document.getElementById('upload-area').classList.add('drag'); }
+function onDrop(e) { e.preventDefault(); document.getElementById('upload-area').classList.remove('drag'); uploadFile(e.dataTransfer.files[0]); }
+
+async function uploadFile(file) {
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/api/upload', {method:'POST', body:fd});
+  const json = await res.json();
+  if (json.ok) {
+    document.getElementById('post-thumbnail').value = json.url;
+    setThumbPreview(json.url);
+    toast('📷 画像をアップロードしました', '#2f9aa0');
+  }
+}
+
+function setThumbPreview(url) {
+  const prev = document.getElementById('thumb-preview');
+  const placeholder = document.getElementById('upload-placeholder');
+  if (url) {
+    document.getElementById('thumb-img').src = url;
+    prev.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    prev.style.display = 'none';
+    placeholder.style.display = 'flex';
+    placeholder.style.flexDirection = 'column';
+    placeholder.style.alignItems = 'center';
+  }
+}
+
+function clearThumb() {
+  document.getElementById('post-thumbnail').value = '';
+  setThumbPreview('');
+}
+
+// ── Markdown preview ──────────────────────────────────────────────────────
+function setMdTab(tab, btn) {
+  document.querySelectorAll('.md-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const editor  = document.getElementById('md-editor');
+  const preview = document.getElementById('md-preview');
+  if (tab === 'preview') {
+    editor.style.display  = 'none';
+    preview.style.display = 'block';
+    preview.innerHTML = simpleMarkdown(editor.value);
+  } else {
+    editor.style.display  = 'flex';
+    preview.style.display = 'none';
+  }
+}
+
+function simpleMarkdown(md) {
+  return md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/^---$/gm, '<hr>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────
+let settings = {};
+
+async function loadSettings() {
+  const res = await fetch('/api/settings');
+  settings = await res.json();
+  document.getElementById('s-title').value       = settings.title || '';
+  document.getElementById('s-url').value         = settings.baseURL || '';
+  document.getElementById('s-desc').value        = settings.description || '';
+  document.getElementById('s-authorName').value  = settings.authorName || '';
+  document.getElementById('s-authorNameEn').value= settings.authorNameEn || '';
+  document.getElementById('s-authorNick').value  = settings.authorNick || '';
+  document.getElementById('s-authorBio').value   = settings.authorBio || '';
+  document.getElementById('s-heroLine1').value   = settings.heroLine1 || '';
+  document.getElementById('s-heroLine2Em').value = settings.heroLine2Em || '';
+  document.getElementById('s-heroLine2').value   = settings.heroLine2 || '';
+  document.getElementById('s-heroSub').value     = settings.heroSub || '';
+  renderSocialList(settings.socialLinks || []);
+}
+
+function renderSocialList(links) {
+  document.getElementById('social-list').innerHTML = links.map((l,i) => `
+    <div class="social-row">
+      <input type="text" value="${l.name}" placeholder="名前" onchange="updateSocial(${i},'name',this.value)">
+      <input type="text" value="${l.url}"  placeholder="URL"  onchange="updateSocial(${i},'url',this.value)">
+      <button class="btn-icon" onclick="removeSocial(${i})">×</button>
+    </div>`).join('');
+}
+
+function updateSocial(i, key, val) { if (settings.socialLinks) settings.socialLinks[i][key] = val; }
+function removeSocial(i) { settings.socialLinks.splice(i,1); renderSocialList(settings.socialLinks); }
+function addSocialRow() { if (!settings.socialLinks) settings.socialLinks=[]; settings.socialLinks.push({name:'',url:''}); renderSocialList(settings.socialLinks); }
+
+async function saveSettings() {
+  settings.title       = document.getElementById('s-title').value;
+  settings.baseURL     = document.getElementById('s-url').value;
+  settings.description = document.getElementById('s-desc').value;
+  settings.authorName  = document.getElementById('s-authorName').value;
+  settings.authorNameEn= document.getElementById('s-authorNameEn').value;
+  settings.authorNick  = document.getElementById('s-authorNick').value;
+  settings.authorBio   = document.getElementById('s-authorBio').value;
+  settings.heroLine1   = document.getElementById('s-heroLine1').value;
+  settings.heroLine2Em = document.getElementById('s-heroLine2Em').value;
+  settings.heroLine2   = document.getElementById('s-heroLine2').value;
+  settings.heroSub     = document.getElementById('s-heroSub').value;
+
+  const res = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(settings)});
+  const json = await res.json();
+  const st = document.getElementById('settings-status');
+  if (json.ok) {
+    toast('✅ 設定を保存しました。hugo.tomlも更新されました。', '#2f9aa0');
+    st.textContent = '✅ 保存済み';
+    setTimeout(() => st.textContent='', 3000);
+  } else {
+    toast('❌ ' + json.error, '#e03a3a');
+  }
+}
+</script>
+</body>
+</html>

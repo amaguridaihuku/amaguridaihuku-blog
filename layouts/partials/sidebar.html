@@ -1,0 +1,51 @@
+<aside class="sidebar">
+
+  <!-- Profile -->
+  <div class="widget">
+    <div class="widget-title">PROFILE</div>
+    <div class="profile-icon">福</div>
+    <p class="profile-name">
+      {{ .Site.Params.authorName }}
+      <small>{{ .Site.Params.authorNameEn }}</small>
+    </p>
+    <p class="profile-desc">{{ .Site.Params.authorBio }}</p>
+    <div class="social-grid">
+      {{ range .Site.Params.socialLinks }}
+      <a class="social-btn" href="{{ .url }}" target="_blank" rel="noopener">{{ .name }}</a>
+      {{ end }}
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="widget">
+    <div class="widget-title">CATEGORIES</div>
+    <ul class="cat-list">
+      {{ range .Site.Taxonomies.categories.ByCount }}
+      <li>
+        <a href="{{ .Page.RelPermalink }}">{{ .Page.Title }}</a>
+        <span class="cat-count">{{ .Count }}</span>
+      </li>
+      {{ end }}
+    </ul>
+  </div>
+
+  <!-- Recent Posts -->
+  <div class="widget">
+    <div class="widget-title">RECENT</div>
+    <ul class="recent-list">
+      {{ range first 5 (where .Site.RegularPages "Section" "posts") }}
+      <li>
+        <span class="recent-date">{{ .Date.Format "2006.01.02" }}</span>
+        <a class="recent-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </div>
+
+  <!-- R-18 Notice -->
+  <div class="widget r18-widget">
+    <div class="widget-title">R-18について</div>
+    <p>当サイトは成人向け（ゲイ向け同人誌）の情報を含みます。18歳未満の方のご閲覧はご遠慮ください。作品の直接的な性的描写はこのブログには掲載しません。</p>
+  </div>
+
+</aside>

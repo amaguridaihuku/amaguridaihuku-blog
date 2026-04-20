@@ -1,0 +1,33 @@
+{{ $i := .index }}
+{{ $post := .post }}
+{{ $cats := $post.Params.categories }}
+{{ $cat := index $cats 0 | default "" }}
+{{ $catClass := "" }}
+{{ if eq $cat "FANBOX" }}{{ $catClass = "fanbox" }}{{ end }}
+{{ if eq $cat "漫画" }}{{ $catClass = "manga" }}{{ end }}
+{{ if eq $cat "イベント参加情報" }}{{ $catClass = "event" }}{{ end }}
+{{ if eq $cat "同人誌販売情報" }}{{ $catClass = "sales" }}{{ end }}
+
+<article class="card">
+  <div class="card-thumb">
+    {{ with $post.Params.thumbnail }}
+      <img src="{{ . }}" alt="{{ $post.Title }}">
+    {{ else }}
+      <span class="card-thumb-label">{{ $cat }}</span>
+    {{ end }}
+    {{ if $post.Params.r18 }}<span class="card-r18">R-18</span>{{ end }}
+  </div>
+  <div class="card-body">
+    <span class="card-num">{{ printf "%02d" $i }}</span>
+    <div class="card-meta">
+      <span>{{ $post.Date.Format "2006.01.02" }}</span>
+      <span>{{ $post.Date.Format "Mon" | upper }}</span>
+      {{ if $cat }}<span class="cat-badge {{ $catClass }}">{{ $cat }}</span>{{ end }}
+    </div>
+    <h2 class="card-title"><a href="{{ $post.RelPermalink }}">{{ $post.Title }}</a></h2>
+    <p class="card-excerpt">{{ $post.Summary | plainify | truncate 100 }}</p>
+    <div class="card-tags">
+      {{ range $post.Params.tags }}<span class="tag">#{{ . }}</span>{{ end }}
+    </div>
+  </div>
+</article>

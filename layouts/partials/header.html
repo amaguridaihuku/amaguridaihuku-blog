@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ "/css/main.css" | relURL }}">
+  {{ if .Site.Params.googleAnalytics }}<script async src="https://www.googletagmanager.com/gtag/js?id={{ .Site.Params.googleAnalytics }}"></script>{{ end }}
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="{{ "/" | relURL }}">
+      <span class="logo-icon">福</span>
+      <span class="logo-text">{{ .Site.Title }}</span>
+    </a>
+    <nav>
+      <a href="{{ "/" | relURL }}"{{ if .IsHome }} class="active"{{ end }}>HOME</a>
+      <a href="{{ "/categories/同人誌情報" | relURL }}"{{ if eq .Title "同人誌情報" }} class="active"{{ end }}>同人誌</a>
+      <a href="{{ "/categories/同人誌販売情報" | relURL }}"{{ if eq .Title "同人誌販売情報" }} class="active"{{ end }}>販売情報</a>
+      <a href="{{ "/categories/fanbox" | relURL }}"{{ if eq .Title "FANBOX" }} class="active"{{ end }}>FANBOX</a>
+      <a href="{{ "/categories/漫画" | relURL }}"{{ if eq .Title "漫画" }} class="active"{{ end }}>漫画</a>
+      <a href="{{ "/categories/イベント参加情報" | relURL }}"{{ if eq .Title "イベント参加情報" }} class="active"{{ end }}>イベント</a>
+    </nav>
+  </div>
+</header>

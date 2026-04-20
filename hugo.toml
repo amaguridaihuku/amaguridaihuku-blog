@@ -1,0 +1,55 @@
+baseURL = "https://higedaihuku.com/"
+languageCode = "ja"
+title = "甘栗大福"
+defaultContentLanguage = "ja"
+hasCJKLanguage = true
+paginate = 10
+enableRobotsTXT = true
+summaryLength = 70
+
+[params]
+  description    = "ゲイ向け同人誌サークル「甘栗大福」の活動記録ブログ"
+  authorName     = "甘栗大福"
+  authorNameEn   = "AMAGURI DAIFUKU"
+  authorNick     = "ひげ大福"
+  authorBio      = "同人誌を作っている個人サークル「甘栗大福」です。野暮ったい筋肉と情の厚いおじさん達の話を描きます。感想はX・Blueskyまでどうぞ。"
+  heroLine1      = "オトナのおじさん達、"
+  heroLine2Em    = "ゆっくりと、"
+  heroLine2      = "描いています。"
+  heroSub        = "ゲイ向け同人誌サークル「甘栗大福」の活動記録です。新刊情報・即売会・通販・FANBOX更新のお知らせをお届けします。"
+
+[[params.socialLinks]]
+  name = "X"
+  url  = "https://x.com/"
+
+[[params.socialLinks]]
+  name = "BLSKY"
+  url  = "https://bsky.app/"
+
+[[params.socialLinks]]
+  name = "PIXIV"
+  url  = "https://pixiv.net/"
+
+[[params.socialLinks]]
+  name = "FANBOX"
+  url  = "https://fanbox.cc/"
+
+[[params.socialLinks]]
+  name = "BOOTH"
+  url  = "https://higedaihuku.booth.pm/"
+
+[[params.socialLinks]]
+  name = "FANZA"
+  url  = "https://fanza.com/"
+
+[[params.socialLinks]]
+  name = "DLSITE"
+  url  = "https://dlsite.com/"
+
+[[params.socialLinks]]
+  name = "MISSKEY"
+  url  = "https://misskey.io/"
+
+[taxonomies]
+  category = "categories"
+  tag      = "tags"
