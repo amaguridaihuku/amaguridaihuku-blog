@@ -5,7 +5,7 @@
 → http://localhost:8888 にアクセス
 """
 
-import json, os, re, cgi, io, mimetypes, subprocess, threading
+import json, os, re, cgi, io, mimetypes, subprocess, threading, shlex
 import urllib.request, urllib.error
 from datetime import datetime, timezone, timedelta, date as dateobj
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -51,37 +51,34 @@ DEFAULTS = {
 _git_status = {"state": "idle", "message": ""}
 
 def git_push_bg(commit_msg: str):
-    """バックグラウンドで git add -A → commit → push を実行する"""
+    """バックグラウンドで git add -A → commit → push をログインシェル経由で実行する"""
     global _git_status
     _git_status = {"state": "pushing", "message": ""}
 
-    # gh auth git-credential など Homebrew 系コマンドが確実に見つかるよう PATH を補完
-    env = os.environ.copy()
-    for extra in ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"]:
-        if extra not in env.get("PATH", ""):
-            env["PATH"] = extra + ":" + env.get("PATH", "")
-    # 認証プロンプトが出て詰まらないようにする
-    env["GIT_TERMINAL_PROMPT"] = "0"
-
-    def run(cmd, **kw):
-        return subprocess.run(cmd, cwd=BLOG_ROOT, capture_output=True,
-                              text=True, env=env, timeout=30, **kw)
+    # ログインシェル(-l)で実行することで ~/.zshrc の PATH・認証ヘルパーを引き継ぐ
+    safe_msg = commit_msg.replace("'", "'\\''")   # シングルクォートをエスケープ
+    script = (
+        f"cd {shlex.quote(str(BLOG_ROOT))} && "
+        f"git add -A && "
+        f"(git commit -m '{safe_msg}' || true) && "
+        f"git push"
+    )
     try:
-        run(["git", "add", "-A"])
-        res = run(["git", "commit", "-m", commit_msg])
-        # 変更なし（nothing to commit）でもエラー扱いしない
-        if res.returncode != 0 and "nothing to commit" not in (res.stdout + res.stderr):
-            _git_status = {"state": "error", "message": (res.stderr or res.stdout).strip()}
-            return
-        push = run(["git", "push"])
-        if push.returncode != 0:
-            _git_status = {"state": "error", "message": (push.stderr or push.stdout).strip()}
-            return
-        _git_status = {"state": "ok", "message": ""}
+        res = subprocess.run(
+            ["/bin/zsh", "-l", "-c", script],
+            capture_output=True, text=True, timeout=45
+        )
+        if res.returncode != 0:
+            msg = (res.stderr or res.stdout).strip()
+            # "nothing to commit" や "up-to-date" は正常扱い
+            if any(s in msg for s in ["nothing to commit", "up-to-date", "Everything up-to-date"]):
+                _git_status = {"state": "ok", "message": ""}
+            else:
+                _git_status = {"state": "error", "message": msg}
+        else:
+            _git_status = {"state": "ok", "message": ""}
     except subprocess.TimeoutExpired:
-        _git_status = {"state": "error", "message": "タイムアウト（30秒）。ターミナルから git push を実行してください。"}
-    except subprocess.CalledProcessError as e:
-        _git_status = {"state": "error", "message": (e.stderr or str(e)).strip()}
+        _git_status = {"state": "error", "message": "タイムアウト（45秒）。ターミナルから git push を実行してください。"}
     except Exception as e:
         _git_status = {"state": "error", "message": str(e)}
 
