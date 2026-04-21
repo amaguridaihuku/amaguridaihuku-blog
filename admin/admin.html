@@ -140,6 +140,15 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 .toast{position:fixed;bottom:24px;right:24px;background:#222;color:#fff;padding:10px 18px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 
+/* ── Push status bar ── */
+#push-bar{position:fixed;bottom:0;left:0;right:0;height:28px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;z-index:9998;transform:translateY(100%);transition:transform .3s}
+#push-bar.show{transform:translateY(0)}
+#push-bar.pushing{background:#2f9aa0;color:#fff}
+#push-bar.ok{background:#2fa05c;color:#fff}
+#push-bar.error{background:#e03a3a;color:#fff}
+.push-spin{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* ── Analytics ── */
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
 .stat-card{background:var(--card);border:1px solid var(--border);padding:20px;text-align:center}
@@ -416,11 +425,38 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="push-bar"></div>
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
 let allPosts = [];
 let currentFile = null;
+
+// ── Push status bar ────────────────────────────────────────────────────────
+let _pushTimer = null;
+function watchPush() {
+  const bar = document.getElementById('push-bar');
+  bar.className = 'show pushing';
+  bar.innerHTML = '<span class="push-spin">⏳</span> GitHubに反映中…';
+  if (_pushTimer) clearInterval(_pushTimer);
+  _pushTimer = setInterval(async () => {
+    try {
+      const res  = await fetch('/api/git-status');
+      const data = await res.json();
+      if (data.state === 'ok') {
+        clearInterval(_pushTimer);
+        bar.className = 'show ok';
+        bar.innerHTML = '✅ 本番サイトに反映しました';
+        setTimeout(() => { bar.className = ''; }, 3500);
+      } else if (data.state === 'error') {
+        clearInterval(_pushTimer);
+        bar.className = 'show error';
+        bar.innerHTML = '❌ プッシュ失敗: ' + (data.message || '不明なエラー');
+        setTimeout(() => { bar.className = ''; }, 6000);
+      }
+    } catch(e) { /* ignore */ }
+  }, 1500);
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -572,6 +608,7 @@ async function savePost() {
   if (json.ok) {
     currentFile = json.file;
     toast('✅ 保存しました', '#2f9aa0');
+    watchPush();
     await loadPosts();
     renderList(allPosts);
   } else {
@@ -587,6 +624,7 @@ async function deletePost() {
   const json = await res.json();
   if (json.ok) {
     toast('🗑 削除しました');
+    watchPush();
     currentFile = null;
     newPost();
     await loadPosts();
@@ -904,6 +942,7 @@ async function saveEvents() {
   const st = document.getElementById('events-status');
   if (json.ok) {
     toast('✅ イベント情報を保存しました', '#2f9aa0');
+    watchPush();
     st.textContent = '✅ 保存済み';
     setTimeout(() => st.textContent='', 3000);
   } else {
@@ -1016,7 +1055,8 @@ async function saveSettings() {
   const json = await res.json();
   const st = document.getElementById('settings-status');
   if (json.ok) {
-    toast('✅ 設定を保存しました。hugo.tomlも更新されました。', '#2f9aa0');
+    toast('✅ 設定を保存しました', '#2f9aa0');
+    watchPush();
     st.textContent = '✅ 保存済み';
     setTimeout(() => st.textContent='', 3000);
   } else {

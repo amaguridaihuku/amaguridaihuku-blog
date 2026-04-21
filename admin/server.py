@@ -5,7 +5,7 @@
 → http://localhost:8888 にアクセス
 """
 
-import json, os, re, cgi, io, mimetypes
+import json, os, re, cgi, io, mimetypes, subprocess, threading
 import urllib.request, urllib.error
 from datetime import datetime, timezone, timedelta, date as dateobj
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -45,6 +45,37 @@ DEFAULTS = {
         {"name": "MISSKEY", "url": "https://misskey.io/"},
     ]
 }
+
+# ── Git push ─────────────────────────────────────────────────────────────────
+
+_git_status = {"state": "idle", "message": ""}
+
+def git_push_bg(commit_msg: str):
+    """バックグラウンドで git add -A → commit → push を実行する"""
+    global _git_status
+    _git_status = {"state": "pushing", "message": ""}
+    try:
+        subprocess.run(["git", "add", "-A"], cwd=BLOG_ROOT, check=True,
+                       capture_output=True, text=True)
+        res = subprocess.run(
+            ["git", "commit", "-m", commit_msg],
+            cwd=BLOG_ROOT, capture_output=True, text=True
+        )
+        # 変更なし（nothing to commit）でもエラー扱いしない
+        if res.returncode != 0 and "nothing to commit" not in (res.stdout + res.stderr):
+            _git_status = {"state": "error", "message": (res.stderr or res.stdout).strip()}
+            return
+        subprocess.run(["git", "push"], cwd=BLOG_ROOT, check=True,
+                       capture_output=True, text=True)
+        _git_status = {"state": "ok", "message": ""}
+    except subprocess.CalledProcessError as e:
+        _git_status = {"state": "error",
+                       "message": (e.stderr or str(e)).strip()}
+    except Exception as e:
+        _git_status = {"state": "error", "message": str(e)}
+
+def git_push(commit_msg: str):
+    threading.Thread(target=git_push_bg, args=(commit_msg,), daemon=True).start()
 
 # ── Frontmatter ──────────────────────────────────────────────────────────────
 
@@ -211,6 +242,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/settings":
             self._json(load_settings())
 
+        elif path == "/api/git-status":
+            self._json(_git_status)
+
         elif path == "/api/events":
             if EVENTS_F.exists():
                 self._json(json.loads(EVENTS_F.read_text(encoding="utf-8")))
@@ -267,6 +301,8 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length))
             try:
                 p = write_post(body)
+                title = body.get("title", p.name)
+                git_push(f"記事を更新: {title}")
                 self._json({"ok": True, "file": p.name})
             except Exception as e:
                 self._json({"error": str(e)}, 500)
@@ -275,6 +311,7 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             try:
                 save_settings(data)
+                git_push("サイト設定を更新")
                 self._json({"ok": True})
             except Exception as e:
                 self._json({"error": str(e)}, 500)
@@ -300,6 +337,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 EVENTS_F.parent.mkdir(parents=True, exist_ok=True)
                 EVENTS_F.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+                git_push("イベント情報を更新")
                 self._json({"ok": True})
             except Exception as e:
                 self._json({"error": str(e)}, 500)
@@ -308,7 +346,9 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length))
             fpath = POSTS_DIR / body.get("file", "")
             if fpath.exists():
+                title = parse_post(fpath).get("title", fpath.name)
                 fpath.unlink()
+                git_push(f"記事を削除: {title}")
                 self._json({"ok": True})
             else:
                 self._json({"error": "not found"}, 404)
