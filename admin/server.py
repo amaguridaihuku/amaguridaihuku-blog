@@ -54,23 +54,34 @@ def git_push_bg(commit_msg: str):
     """バックグラウンドで git add -A → commit → push を実行する"""
     global _git_status
     _git_status = {"state": "pushing", "message": ""}
+
+    # gh auth git-credential など Homebrew 系コマンドが確実に見つかるよう PATH を補完
+    env = os.environ.copy()
+    for extra in ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"]:
+        if extra not in env.get("PATH", ""):
+            env["PATH"] = extra + ":" + env.get("PATH", "")
+    # 認証プロンプトが出て詰まらないようにする
+    env["GIT_TERMINAL_PROMPT"] = "0"
+
+    def run(cmd, **kw):
+        return subprocess.run(cmd, cwd=BLOG_ROOT, capture_output=True,
+                              text=True, env=env, timeout=30, **kw)
     try:
-        subprocess.run(["git", "add", "-A"], cwd=BLOG_ROOT, check=True,
-                       capture_output=True, text=True)
-        res = subprocess.run(
-            ["git", "commit", "-m", commit_msg],
-            cwd=BLOG_ROOT, capture_output=True, text=True
-        )
+        run(["git", "add", "-A"])
+        res = run(["git", "commit", "-m", commit_msg])
         # 変更なし（nothing to commit）でもエラー扱いしない
         if res.returncode != 0 and "nothing to commit" not in (res.stdout + res.stderr):
             _git_status = {"state": "error", "message": (res.stderr or res.stdout).strip()}
             return
-        subprocess.run(["git", "push"], cwd=BLOG_ROOT, check=True,
-                       capture_output=True, text=True)
+        push = run(["git", "push"])
+        if push.returncode != 0:
+            _git_status = {"state": "error", "message": (push.stderr or push.stdout).strip()}
+            return
         _git_status = {"state": "ok", "message": ""}
+    except subprocess.TimeoutExpired:
+        _git_status = {"state": "error", "message": "タイムアウト（30秒）。ターミナルから git push を実行してください。"}
     except subprocess.CalledProcessError as e:
-        _git_status = {"state": "error",
-                       "message": (e.stderr or str(e)).strip()}
+        _git_status = {"state": "error", "message": (e.stderr or str(e)).strip()}
     except Exception as e:
         _git_status = {"state": "error", "message": str(e)}
 
