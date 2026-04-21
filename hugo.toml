@@ -13,12 +13,13 @@ summaryLength = 70
   description    = "ゲイ向け同人誌サークル「甘栗大福」の活動記録ブログ"
   authorName     = "甘栗大福"
   authorNameEn   = "AMAGURI DAIFUKU"
-  authorNick     = "ひげ大福"
+  authorNick     = "甘栗大福"
   authorBio      = "男の裸が好き！ゲイ向け成人BL漫画を描いています。"
-  heroLine1      = "好きなものは裸です。"
-  heroLine2Em    = "そういう漫画を、"
-  heroLine2      = "描いています。"
+  heroLine1      = "好きなものは男の裸！"
+  heroLine2Em    = "そういう漫画が"
+  heroLine2      = "いっぱいです!!"
   heroSub        = "ゲイ向け同人誌サークル「甘栗大福」の活動記録です。新刊情報・即売会・通販・FANBOX更新のお知らせをお届けします。"
+
   goatcounterSite = "amaguridaihuku"
 
 [[params.socialLinks]]
