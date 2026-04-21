@@ -16,23 +16,19 @@ mkdir -p "$APP/Contents/Resources"
 # ── 実行スクリプト ─────────────────────────────────────────
 cat > "$APP/Contents/MacOS/start" << SCRIPT
 #!/bin/bash
-# 古いサーバーが起動中なら終了させる
-OLD_PID=\$(lsof -Pi :8888 -sTCP:LISTEN -t 2>/dev/null)
-if [ -n "\$OLD_PID" ]; then
-  kill \$OLD_PID 2>/dev/null
-  sleep 0.8
-fi
+# Terminal.app 経由で起動することで Downloads フォルダへのアクセス権を確保する
+osascript << APPLE
+tell application "Terminal"
+  activate
+  do script "lsof -ti :8888 | xargs kill -9 2>/dev/null; sleep 0.5; cd '$BLOG_DIR' && python3 admin/server.py"
+end tell
+APPLE
 
-# サーバーを起動
-cd "$BLOG_DIR"
-python3 admin/server.py > /tmp/amaguridaihuku-admin.log 2>&1 &
-
-# 起動を待つ
+# サーバー起動を待ってからブラウザを開く
 for i in \$(seq 1 20); do
   sleep 0.5
   lsof -Pi :8888 -sTCP:LISTEN -t >/dev/null 2>&1 && break
 done
-
 open http://localhost:8888
 SCRIPT
 chmod +x "$APP/Contents/MacOS/start"
