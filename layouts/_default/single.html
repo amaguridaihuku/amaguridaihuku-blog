@@ -46,8 +46,8 @@
       {{ if or $fanboxURL $fantiaURL }}
       <script>
       (function(){
-        var fanboxURL = {{ $fanboxURL | jsonify }};
-        var fantiaURL = {{ $fantiaURL | jsonify }};
+        var fanboxURL = "{{ $fanboxURL }}";
+        var fantiaURL = "{{ $fantiaURL }}";
         var body = document.querySelector('.single-body');
         if (!body) return;
 
