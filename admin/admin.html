@@ -979,7 +979,9 @@ async function loadAnalytics() {
   const dayMap = {};
   hits.forEach(page => {
     (page.stats || []).forEach(s => {
-      dayMap[s.day] = (dayMap[s.day] || 0) + s.count;
+      // GoatCounter は s.daily（またはフォールバックで s.count）に日別数を入れる
+      const n = s.daily ?? s.count ?? 0;
+      dayMap[s.day] = (dayMap[s.day] || 0) + n;
     });
   });
 
