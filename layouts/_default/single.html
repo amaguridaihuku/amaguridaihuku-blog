@@ -38,41 +38,59 @@
       });
       </script>
 
-      {{ if in .Params.categories "漫画" }}
       {{ $fanboxURL := "" }}{{ $fantiaURL := "" }}
       {{ range .Site.Params.socialLinks }}
         {{ if eq .name "FANBOX" }}{{ $fanboxURL = .url }}{{ end }}
         {{ if eq .name "FANTIA" }}{{ $fantiaURL = .url }}{{ end }}
       {{ end }}
+      {{ if or $fanboxURL $fantiaURL }}
       <script>
       (function(){
         var fanboxURL = {{ $fanboxURL | jsonify }};
         var fantiaURL = {{ $fantiaURL | jsonify }};
         var body = document.querySelector('.single-body');
         if (!body) return;
+
         var rules = [
-          { re: /FANBOX|Fanbox|fanbox/g, url: fanboxURL,  label: 'Fanbox'  },
-          { re: /FANTIA|Fantia|fantia/g, url: fantiaURL,  label: 'Fantia'  },
+          { re: /FANBOX|Fanbox|fanbox/g, url: fanboxURL, label: 'FANBOX' },
+          { re: /FANTIA|Fantia|fantia/g, url: fantiaURL, label: 'FANTIA' },
         ];
+
+        // ① テキストノードをリンクに変換
         function walk(node) {
-          if (node.nodeType === 3) { // text node
+          if (node.nodeType === 3) {
             var val = node.nodeValue;
             var changed = false;
-            rules.forEach(function(r){
-              if (r.url && r.re.test(val)) changed = true;
-              r.re.lastIndex = 0;
-            });
+            rules.forEach(function(r){ if (r.url && r.re.test(val)) changed = true; r.re.lastIndex = 0; });
             if (!changed) return;
             var span = document.createElement('span');
             var html = val.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             rules.forEach(function(r){
               if (!r.url) return;
-              html = html.replace(r.re,
-                '<a href="' + r.url + '" target="_blank" rel="noopener" class="auto-link">' + r.label + '</a>');
+              html = html.replace(r.re, '<a href="'+r.url+'" target="_blank" rel="noopener" class="auto-link">'+r.label+'</a>');
             });
             span.innerHTML = html;
             node.parentNode.replaceChild(span, node);
-          } else if (node.nodeType === 1 && node.tagName !== 'A' && node.tagName !== 'SCRIPT') {
+          } else if (node.nodeType === 1 && node.tagName !== 'SCRIPT') {
+            // ② 既存の<a>タグのhrefが間違っている場合は上書き修正
+            if (node.tagName === 'A') {
+              var txt = node.textContent.trim();
+              var href = node.getAttribute('href') || '';
+              if (fanboxURL && /^FANBOX$/i.test(txt) && href !== fanboxURL) {
+                node.setAttribute('href', fanboxURL);
+                node.setAttribute('target', '_blank');
+                node.setAttribute('rel', 'noopener');
+                node.classList.add('auto-link');
+              } else if (fantiaURL && /^FANTIA$/i.test(txt) && href !== fantiaURL) {
+                node.setAttribute('href', fantiaURL);
+                node.setAttribute('target', '_blank');
+                node.setAttribute('rel', 'noopener');
+                node.classList.add('auto-link');
+              } else {
+                Array.from(node.childNodes).forEach(walk);
+              }
+              return;
+            }
             Array.from(node.childNodes).forEach(walk);
           }
         }
