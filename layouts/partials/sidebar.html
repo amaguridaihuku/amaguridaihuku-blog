@@ -9,6 +9,11 @@
       <small>{{ .Site.Params.authorNameEn }}</small>
     </p>
     <p class="profile-desc">{{ .Site.Params.authorBio }}</p>
+    {{ with .Site.Params.contactEmail }}
+    <p class="profile-contact">
+      <a href="mailto:{{ . }}">✉ {{ . }}</a>
+    </p>
+    {{ end }}
     <div class="social-grid">
       {{ range .Site.Params.socialLinks }}
       <a class="social-btn" href="{{ .url }}" target="_blank" rel="noopener">
