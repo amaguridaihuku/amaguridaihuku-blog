@@ -331,7 +331,7 @@ class Handler(BaseHTTPRequestHandler):
             raw = self.rfile.read(length)
             fs = cgi.FieldStorage(fp=io.BytesIO(raw), headers=self.headers, environ=environ)
             fileitem = fs["file"] if "file" in fs else None
-            if fileitem and fileitem.filename:
+            if fileitem is not None and fileitem.filename:
                 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
                 ext  = Path(fileitem.filename).suffix.lower()
                 name = f"{datetime.now(JST).strftime('%Y%m%d%H%M%S')}{ext}"
