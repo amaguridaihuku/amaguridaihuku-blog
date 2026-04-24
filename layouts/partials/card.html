@@ -9,7 +9,8 @@
 
 {{ $thumb := $post.Params.thumbnail }}
 {{ if not $thumb }}
-  {{ $imgMatches := findRE `src="(https?://[^"]+)"` $post.Content 1 }}
+  {{/* /images/ の相対パスと https:// の両方に対応 */}}
+  {{ $imgMatches := findRE `src="((?:/images|https?://)[^"]+)"` $post.Content 1 }}
   {{ if $imgMatches }}
     {{ $thumb = replaceRE `src="([^"]+)"` "$1" (index $imgMatches 0) }}
   {{ end }}
