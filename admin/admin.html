@@ -296,6 +296,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
           <button class="md-toolbar-btn" onclick="mdImage()" title="画像を挿入">🖼</button>
           <div class="md-toolbar-sep"></div>
           <button class="md-toolbar-btn" onclick="mdInsert('\n---\n','',true)" title="区切り線">―</button>
+          <button class="md-toolbar-btn" onclick="mdThumb()" title="サムネイル画像を挿入（クリックで拡大）" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">🖼 サムネ</button>
           <button class="md-toolbar-btn" onclick="mdGallery()" title="複数画像をギャラリーとして挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">🖼 ギャラリー</button>
           <button class="md-toolbar-btn" onclick="mdDoujin()" title="表紙＋見本ページのプレビューを挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">📖 同人誌</button>
           <div class="md-toolbar-right">
@@ -819,6 +820,22 @@ async function mdDoujin() {
   ta.setRangeText(html, ta.selectionStart, ta.selectionStart, 'end');
   ta.focus(); onEditorInput();
   toast(`✅ 同人誌プレビューを挿入しました（表紙1枚＋見本${pageUrls.length}枚）`, '#2f9aa0');
+}
+
+async function mdThumb() {
+  const widthStr = prompt('サムネイルの横幅（px）\n※後から数字を直接編集して変更できます', '300');
+  if (widthStr === null) return; // キャンセル
+  const width = parseInt(widthStr) || 300;
+  const file = await pickFile('image/*', false);
+  if (!file) return;
+  toast('⏳ アップロード中…', '#888');
+  const url = await uploadOne(file);
+  if (!url) return;
+  const html = `\n<img src="${url}" width="${width}" class="thumb-img" alt="">\n`;
+  const ta = document.getElementById('md-editor');
+  ta.setRangeText(html, ta.selectionStart, ta.selectionStart, 'end');
+  ta.focus(); onEditorInput();
+  toast(`✅ サムネイル（${width}px）を挿入しました`, '#2f9aa0');
 }
 
 async function mdGallery() {

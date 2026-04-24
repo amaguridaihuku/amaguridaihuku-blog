@@ -234,6 +234,10 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 .gallery:has(> img:only-child) img { aspect-ratio: auto; object-fit: contain; max-height: 520px; }
 /* 2枚のとき */
 .gallery:has(> img:nth-child(2):last-child) { grid-template-columns: 1fr 1fr; }
+/* サムネイル画像 */
+.thumb-img { cursor: zoom-in; max-width: 100%; display: block; margin: 8px 0; }
+.thumb-img:hover { opacity: .85; transition: opacity .2s; }
+
 /* ライトボックス */
 .lb-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.92);
