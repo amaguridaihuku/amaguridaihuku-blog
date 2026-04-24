@@ -736,26 +736,39 @@ function mdImage() {
   const input = document.createElement('input');
   input.type = 'file'; input.accept = 'image/*';
   input.onchange = async () => {
-    const fd = new FormData();
-    fd.append('file', input.files[0]);
-    const res  = await fetch('/api/upload', {method:'POST', body:fd});
-    const json = await res.json();
-    if (json.ok) {
-      const ta = document.getElementById('md-editor');
-      const pos = ta.selectionStart;
-      ta.setRangeText(`\n![](${json.url})\n`, pos, pos, 'end');
-      ta.focus(); onEditorInput();
-      toast('🖼 画像を挿入しました', '#2f9aa0');
+    if (!input.files[0]) return;
+    toast('⏳ アップロード中…', '#888');
+    try {
+      const fd = new FormData();
+      fd.append('file', input.files[0]);
+      const res  = await fetch('/api/upload', {method:'POST', body:fd});
+      const json = await res.json();
+      if (json.ok) {
+        const ta = document.getElementById('md-editor');
+        const pos = ta.selectionStart;
+        ta.setRangeText(`\n![](${json.url})\n`, pos, pos, 'end');
+        ta.focus(); onEditorInput();
+        toast('🖼 画像を挿入しました', '#2f9aa0');
+      } else {
+        toast('❌ アップロード失敗: ' + (json.error || '不明'), '#e03a3a');
+      }
+    } catch(e) {
+      toast('❌ サーバーに接続できません。アイコンから再起動してください。', '#e03a3a');
     }
   };
   input.click();
 }
 
 async function uploadOne(file) {
-  const fd = new FormData(); fd.append('file', file);
-  const res  = await fetch('/api/upload', {method:'POST', body:fd});
-  const json = await res.json();
-  return json.ok ? json.url : null;
+  try {
+    const fd = new FormData(); fd.append('file', file);
+    const res  = await fetch('/api/upload', {method:'POST', body:fd});
+    const json = await res.json();
+    return json.ok ? json.url : null;
+  } catch(e) {
+    toast('❌ サーバーに接続できません。アイコンから再起動してください。', '#e03a3a');
+    return null;
+  }
 }
 
 async function pickFile(accept, multiple) {
