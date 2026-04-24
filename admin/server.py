@@ -23,7 +23,7 @@ ADMIN_HTML  = Path(__file__).parent / "admin.html"
 PORT        = 8888
 JST         = timezone(timedelta(hours=9))
 
-def find_logo() -> Path | None:
+def find_logo():
     for ext in ("png", "jpg", "gif"):
         p = LOGO_DIR / f"logo.{ext}"
         if p.exists():
