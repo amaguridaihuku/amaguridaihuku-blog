@@ -20,11 +20,11 @@ cat > "$APP/Contents/MacOS/start" << SCRIPT
 osascript << APPLE
 tell application "Terminal"
   activate
-  do script "lsof -ti :8888 | xargs kill -9 2>/dev/null; sleep 0.5; cd '$BLOG_DIR' && python3 admin/server.py"
+  do script "lsof -ti :8888 | xargs kill -9 2>/dev/null; lsof -ti :1313 | xargs kill -9 2>/dev/null; sleep 0.5; cd '$BLOG_DIR' && python3 admin/server.py & hugo server --disableFastRender"
 end tell
 APPLE
 
-# サーバー起動を待ってからブラウザを開く
+# 管理画面サーバー起動を待ってからブラウザを開く
 for i in \$(seq 1 20); do
   sleep 0.5
   lsof -Pi :8888 -sTCP:LISTEN -t >/dev/null 2>&1 && break

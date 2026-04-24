@@ -232,11 +232,13 @@ class Handler(BaseHTTPRequestHandler):
             self._html(ADMIN_HTML.read_bytes())
 
         elif path == "/api/posts":
-            files = sorted(POSTS_DIR.glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True)
+            files = list(POSTS_DIR.glob("*.md"))
             posts = []
             for f in files:
                 p = parse_post(f)
                 posts.append({k: v for k, v in p.items() if k != "body"})
+            # 投稿日付の新しい順にソート（日付なしは末尾）
+            posts.sort(key=lambda p: p.get("date") or "", reverse=True)
             self._json(posts)
 
         elif path == "/api/post":
