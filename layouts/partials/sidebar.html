@@ -3,7 +3,12 @@
   <!-- Profile -->
   <div class="widget">
     <div class="widget-title">PROFILE</div>
-    <div class="profile-icon">福</div>
+    <div class="profile-icon">
+      {{- if fileExists "static/images/logo.png" -}}<img src="/images/logo.png" alt="logo">
+      {{- else if fileExists "static/images/logo.jpg" -}}<img src="/images/logo.jpg" alt="logo">
+      {{- else if fileExists "static/images/logo.gif" -}}<img src="/images/logo.gif" alt="logo">
+      {{- else -}}福{{- end -}}
+    </div>
     <p class="profile-name">
       {{ .Site.Params.authorName }}
       <small>{{ .Site.Params.authorNameEn }}</small>

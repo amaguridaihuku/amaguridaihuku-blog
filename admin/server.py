@@ -15,12 +15,20 @@ from urllib.parse import urlparse, parse_qs
 BLOG_ROOT   = Path(__file__).parent.parent
 POSTS_DIR   = BLOG_ROOT / "content" / "posts"
 IMAGES_DIR  = BLOG_ROOT / "static" / "images" / "posts"
+LOGO_DIR    = BLOG_ROOT / "static" / "images"
 SETTINGS_F  = Path(__file__).parent / "settings.json"
 EVENTS_F    = BLOG_ROOT / "data" / "events.json"
 HUGO_TOML   = BLOG_ROOT / "hugo.toml"
 ADMIN_HTML  = Path(__file__).parent / "admin.html"
 PORT        = 8888
 JST         = timezone(timedelta(hours=9))
+
+def find_logo() -> Path | None:
+    for ext in ("png", "jpg", "gif"):
+        p = LOGO_DIR / f"logo.{ext}"
+        if p.exists():
+            return p
+    return None
 
 DEFAULTS = {
     "title": "甘栗大福",
@@ -255,6 +263,13 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/git-status":
             self._json(_git_status)
 
+        elif path == "/api/logo-exists":
+            logo = find_logo()
+            if logo:
+                self._json({"exists": True, "url": f"/images/{logo.name}"})
+            else:
+                self._json({"exists": False})
+
         elif path == "/api/events":
             if EVENTS_F.exists():
                 self._json(json.loads(EVENTS_F.read_text(encoding="utf-8")))
@@ -287,7 +302,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json(results)
 
         elif path.startswith("/images/"):
-            # serve uploaded images
+            # static/images 以下を配信（logo含む）
             img_path = BLOG_ROOT / "static" / path.lstrip("/")
             if img_path.exists():
                 ct, _ = mimetypes.guess_type(str(img_path))
@@ -351,6 +366,33 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"ok": True})
             except Exception as e:
                 self._json({"error": str(e)}, 500)
+
+        elif path == "/api/upload-logo":
+            ct = self.headers.get("Content-Type", "")
+            environ = {"REQUEST_METHOD": "POST", "CONTENT_TYPE": ct, "CONTENT_LENGTH": str(length)}
+            raw = self.rfile.read(length)
+            fs = cgi.FieldStorage(fp=io.BytesIO(raw), headers=self.headers, environ=environ)
+            fileitem = fs["file"] if "file" in fs else None
+            if fileitem is not None and fileitem.filename:
+                # 既存ロゴを削除してから保存
+                for old in find_logo() and [find_logo()] or []:
+                    old.unlink(missing_ok=True)
+                ext  = Path(fileitem.filename).suffix.lower() or ".png"
+                dest = LOGO_DIR / f"logo{ext}"
+                LOGO_DIR.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(fileitem.file.read())
+                git_push("ロゴ画像を更新")
+                self._json({"ok": True, "url": f"/images/logo{ext}"})
+            else:
+                self._json({"error": "no file"}, 400)
+
+        elif path == "/api/delete-logo":
+            self.rfile.read(length)
+            logo = find_logo()
+            if logo:
+                logo.unlink(missing_ok=True)
+                git_push("ロゴ画像を削除")
+            self._json({"ok": True})
 
         elif path == "/api/delete":
             body = json.loads(self.rfile.read(length))

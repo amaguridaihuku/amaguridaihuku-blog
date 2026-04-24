@@ -74,22 +74,22 @@
           } else if (node.nodeType === 1 && node.tagName !== 'SCRIPT') {
             // ② 既存の<a>タグのhrefが間違っている場合は上書き修正
             if (node.tagName === 'A') {
+              // <a>タグは子ノードを処理しない（入れ子リンク防止）
+              // hrefが違う場合だけ補正する
               var txt = node.textContent.trim();
               var href = node.getAttribute('href') || '';
-              if (fanboxURL && /^FANBOX$/i.test(txt) && href !== fanboxURL) {
+              if (fanboxURL && /^FANBOX$/i.test(txt) && !href.includes('fanbox.cc')) {
                 node.setAttribute('href', fanboxURL);
                 node.setAttribute('target', '_blank');
                 node.setAttribute('rel', 'noopener');
                 node.classList.add('auto-link');
-              } else if (fantiaURL && /^FANTIA$/i.test(txt) && href !== fantiaURL) {
+              } else if (fantiaURL && /^FANTIA$/i.test(txt) && !href.includes('fantia.jp')) {
                 node.setAttribute('href', fantiaURL);
                 node.setAttribute('target', '_blank');
                 node.setAttribute('rel', 'noopener');
                 node.classList.add('auto-link');
-              } else {
-                Array.from(node.childNodes).forEach(walk);
               }
-              return;
+              return; // 子ノードは処理しない
             }
             Array.from(node.childNodes).forEach(walk);
           }

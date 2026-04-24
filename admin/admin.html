@@ -316,6 +316,18 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
   <!-- SETTINGS -->
   <div class="editor" id="tab-settings" style="display:none">
     <div class="settings-panel">
+      <h2>ロゴ画像</h2>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px">
+        <div id="logo-preview" style="width:60px;height:60px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:900;overflow:hidden;flex-shrink:0">福</div>
+        <div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:10px">ヘッダーとプロフィール欄に表示されます。正方形の画像推奨。</p>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-save" onclick="uploadLogo()" style="font-size:11px;padding:6px 14px">📷 画像を選択してアップロード</button>
+            <button class="btn btn-del" onclick="deleteLogo()" style="font-size:11px;padding:6px 14px">削除</button>
+          </div>
+        </div>
+      </div>
+
       <h2>基本設定</h2>
       <div class="settings-grid">
         <div>
@@ -486,6 +498,7 @@ function showTab(name) {
     (name==='posts'&&i===0)||(name==='settings'&&i===1)||(name==='events'&&i===2)||(name==='analytics'&&i===3)));
   if (name === 'events')    loadEvents();
   if (name === 'analytics') loadAnalytics();
+  if (name === 'settings')  loadLogoPreview();
 }
 
 // ── Post List ──────────────────────────────────────────────────────────────
@@ -885,6 +898,60 @@ function simpleMarkdown(md) {
 
 // ── Settings ──────────────────────────────────────────────────────────────
 let settings = {};
+
+// ── Logo upload ───────────────────────────────────────────────────────────
+async function uploadLogo() {
+  const file = await pickFile('image/*', false);
+  if (!file) return;
+  toast('⏳ アップロード中…', '#888');
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res  = await fetch('/api/upload-logo', {method:'POST', body:fd});
+    const json = await res.json();
+    if (json.ok) {
+      setLogoPreview(json.url);
+      toast('✅ ロゴをアップロードしました', '#2f9aa0');
+      watchPush();
+    } else {
+      toast('❌ ' + (json.error || '失敗'), '#e03a3a');
+    }
+  } catch(e) {
+    toast('❌ サーバーに接続できません', '#e03a3a');
+  }
+}
+
+async function deleteLogo() {
+  if (!confirm('ロゴ画像を削除しますか？')) return;
+  try {
+    const res  = await fetch('/api/delete-logo', {method:'POST'});
+    const json = await res.json();
+    if (json.ok) {
+      setLogoPreview('');
+      toast('🗑 ロゴを削除しました');
+      watchPush();
+    }
+  } catch(e) {
+    toast('❌ サーバーに接続できません', '#e03a3a');
+  }
+}
+
+function setLogoPreview(url) {
+  const el = document.getElementById('logo-preview');
+  if (url) {
+    el.innerHTML = `<img src="${url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    el.innerHTML = '福';
+  }
+}
+
+async function loadLogoPreview() {
+  try {
+    const res = await fetch('/api/logo-exists');
+    const json = await res.json();
+    if (json.exists) setLogoPreview(json.url);
+  } catch(e) {}
+}
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
