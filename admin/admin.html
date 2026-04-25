@@ -246,11 +246,11 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
         </div>
         <div class="field">
           <label style="margin-bottom:8px">アイキャッチ画像</label>
-          <div class="upload-area" id="upload-area" onclick="document.getElementById('upload-input').click()" ondragover="onDragOver(event)" ondrop="onDrop(event)">
+          <div class="upload-area" id="upload-area" onclick="pickAndUploadThumb()" ondragover="onDragOver(event)" ondrop="onDrop(event)">
             <div id="thumb-preview" style="display:none;width:100%;text-align:center">
               <img id="thumb-img" src="" alt="thumbnail">
               <div class="thumb-actions">
-                <button class="btn-sm primary" onclick="event.stopPropagation();document.getElementById('upload-input').click()">変更</button>
+                <button class="btn-sm primary" onclick="event.stopPropagation();pickAndUploadThumb()">変更</button>
                 <button class="btn-sm danger" onclick="event.stopPropagation();clearThumb()">削除</button>
               </div>
             </div>
@@ -746,31 +746,14 @@ function mdLink() {
   onEditorInput();
 }
 
-function mdImage() {
-  const input = document.createElement('input');
-  input.type = 'file'; input.accept = 'image/*';
-  input.onchange = async () => {
-    if (!input.files[0]) return;
-    toast('⏳ アップロード中…', '#888');
-    try {
-      const fd = new FormData();
-      fd.append('file', input.files[0]);
-      const res  = await fetch('/api/upload', {method:'POST', body:fd});
-      const json = await res.json();
-      if (json.ok) {
-        const ta = document.getElementById('md-editor');
-        const pos = ta.selectionStart;
-        ta.setRangeText(`\n![](${json.url})\n`, pos, pos, 'end');
-        ta.focus(); onEditorInput();
-        toast('🖼 画像を挿入しました', '#2f9aa0');
-      } else {
-        toast('❌ アップロード失敗: ' + (json.error || '不明'), '#e03a3a');
-      }
-    } catch(e) {
-      toast('❌ サーバーに接続できません。アイコンから再起動してください。', '#e03a3a');
-    }
-  };
-  input.click();
+async function mdImage() {
+  const url = await pickFromFolder(false);
+  if (!url) return;
+  const ta = document.getElementById('md-editor');
+  const pos = ta.selectionStart;
+  ta.setRangeText(`\n![](${url})\n`, pos, pos, 'end');
+  ta.focus(); onEditorInput();
+  toast('🖼 画像を挿入しました', '#2f9aa0');
 }
 
 async function uploadOne(file) {
@@ -785,37 +768,35 @@ async function uploadOne(file) {
   }
 }
 
-async function pickFile(accept, multiple) {
-  return new Promise(resolve => {
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = accept;
-    if (multiple) input.multiple = true;
-    input.onchange = () => resolve(multiple ? Array.from(input.files) : input.files[0] || null);
-    input.oncancel  = () => resolve(multiple ? [] : null);
-    input.click();
-  });
+async function pickFromFolder(multiple = false) {
+  try {
+    const res  = await fetch(`/api/pick-image?multiple=${multiple}`);
+    const json = await res.json();
+    if (!json.ok) return multiple ? [] : null;
+    return multiple ? (json.urls || []) : (json.url || null);
+  } catch(e) {
+    toast('❌ サーバーに接続できません', '#e03a3a');
+    return multiple ? [] : null;
+  }
+}
+
+async function pickAndUploadThumb() {
+  const url = await pickFromFolder(false);
+  if (!url) return;
+  document.getElementById('post-thumbnail').value = url;
+  setThumbPreview(url);
+  toast('📷 画像をアップロードしました', '#2f9aa0');
 }
 
 async function mdDoujin() {
   // ① 表紙を1枚選ぶ
   toast('📖 表紙画像を選択してください', '#2f9aa0');
-  const coverFile = await pickFile('image/*', false);
-  if (!coverFile) return;
-  toast('⏳ 表紙をアップロード中…', '#888');
-  const coverUrl = await uploadOne(coverFile);
-  if (!coverUrl) { toast('❌ アップロード失敗', '#e03a3a'); return; }
+  const coverUrl = await pickFromFolder(false);
+  if (!coverUrl) return;
 
   // ② 見本ページを複数選ぶ
   toast('📄 見本ページを選択してください（複数可・不要ならキャンセル）', '#2f9aa0');
-  const pageFiles = await pickFile('image/*', true);
-  let pageUrls = [];
-  if (pageFiles.length > 0) {
-    toast(`⏳ ${pageFiles.length}枚をアップロード中…`, '#888');
-    for (const f of pageFiles) {
-      const url = await uploadOne(f);
-      if (url) pageUrls.push(url);
-    }
-  }
+  const pageUrls = await pickFromFolder(true);
 
   // ③ HTML生成
   let html = `\n<div class="doujin-preview">\n`;
@@ -837,12 +818,9 @@ async function mdDoujin() {
 
 async function mdThumb() {
   const widthStr = prompt('サムネイルの横幅（px）\n※後から数字を直接編集して変更できます', '300');
-  if (widthStr === null) return; // キャンセル
+  if (widthStr === null) return;
   const width = parseInt(widthStr) || 300;
-  const file = await pickFile('image/*', false);
-  if (!file) return;
-  toast('⏳ アップロード中…', '#888');
-  const url = await uploadOne(file);
+  const url = await pickFromFolder(false);
   if (!url) return;
   const html = `\n<img src="${url}" width="${width}" class="thumb-img" alt="">\n`;
   const ta = document.getElementById('md-editor');
@@ -852,28 +830,14 @@ async function mdThumb() {
 }
 
 async function mdGallery() {
-  const input = document.createElement('input');
-  input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
-  input.onchange = async () => {
-    const files = Array.from(input.files);
-    if (!files.length) return;
-    toast(`📷 ${files.length}枚をアップロード中…`, '#888');
-    const urls = [];
-    for (const file of files) {
-      const fd = new FormData(); fd.append('file', file);
-      const res  = await fetch('/api/upload', {method:'POST', body:fd});
-      const json = await res.json();
-      if (json.ok) urls.push(json.url);
-    }
-    if (!urls.length) return;
-    const html = `\n<div class="gallery">\n${urls.map(u=>`  <img src="${u}" alt="">`).join('\n')}\n</div>\n`;
-    const ta  = document.getElementById('md-editor');
-    const pos = ta.selectionStart;
-    ta.setRangeText(html, pos, pos, 'end');
-    ta.focus(); onEditorInput();
-    toast(`✅ ${urls.length}枚をギャラリーとして挿入しました`, '#2f9aa0');
-  };
-  input.click();
+  const urls = await pickFromFolder(true);
+  if (!urls.length) return;
+  const html = `\n<div class="gallery">\n${urls.map(u=>`  <img src="${u}" alt="">`).join('\n')}\n</div>\n`;
+  const ta  = document.getElementById('md-editor');
+  const pos = ta.selectionStart;
+  ta.setRangeText(html, pos, pos, 'end');
+  ta.focus(); onEditorInput();
+  toast(`✅ ${urls.length}枚をギャラリーとして挿入しました`, '#2f9aa0');
 }
 
 // Cmd/Ctrl + S で保存

@@ -5,12 +5,12 @@
 → http://localhost:8888 にアクセス
 """
 
-import json, os, re, cgi, io, mimetypes, subprocess, threading, shlex
+import json, os, re, cgi, io, mimetypes, subprocess, threading, shlex, shutil
 import urllib.request, urllib.error
 from datetime import datetime, timezone, timedelta, date as dateobj
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 
 BLOG_ROOT   = Path(__file__).parent.parent
 POSTS_DIR   = BLOG_ROOT / "content" / "posts"
@@ -301,9 +301,48 @@ class Handler(BaseHTTPRequestHandler):
                     results[key] = {"error": str(e)}
             self._json(results)
 
+        elif path == "/api/pick-image":
+            multiple = qs.get("multiple", ["false"])[0] == "true"
+            default_dir = "/Users/dai/漫画作業"
+            try:
+                if multiple:
+                    script = (
+                        f'set fs to choose file of type {{"public.image"}} '
+                        f'default location POSIX file "{default_dir}" with multiple selections allowed\n'
+                        f'set out to ""\n'
+                        f'repeat with f in fs\nset out to out & POSIX path of f & linefeed\nend repeat\n'
+                        f'return out'
+                    )
+                else:
+                    script = f'POSIX path of (choose file of type {{"public.image"}} default location POSIX file "{default_dir}")'
+                result = subprocess.run(["osascript", "-e", script],
+                                        capture_output=True, text=True, timeout=120)
+                if result.returncode != 0:
+                    self._json({"ok": False, "cancelled": True})
+                    return
+                paths = [p.strip() for p in result.stdout.strip().split("\n") if p.strip()]
+                IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+                urls = []
+                for src_path in paths:
+                    src = Path(src_path)
+                    if not src.exists():
+                        continue
+                    ext  = src.suffix.lower()
+                    name = f"{datetime.now(JST).strftime('%Y%m%d%H%M%S')}_{len(urls)}{ext}"
+                    shutil.copy2(src, IMAGES_DIR / name)
+                    urls.append(f"/images/posts/{name}")
+                if multiple:
+                    self._json({"ok": True, "urls": urls})
+                else:
+                    self._json({"ok": True, "url": urls[0] if urls else None})
+            except subprocess.TimeoutExpired:
+                self._json({"ok": False, "error": "タイムアウト（2分）"})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)})
+
         elif path.startswith("/images/"):
             # static/images 以下を配信（logo含む）
-            img_path = BLOG_ROOT / "static" / path.lstrip("/")
+            img_path = BLOG_ROOT / "static" / unquote(path).lstrip("/")
             if img_path.exists():
                 ct, _ = mimetypes.guess_type(str(img_path))
                 data = img_path.read_bytes()
