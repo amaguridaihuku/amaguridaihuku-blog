@@ -238,6 +238,45 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 .thumb-img { cursor: zoom-in; max-width: 100%; display: block; margin: 8px 0; }
 .thumb-img:hover { opacity: .85; transition: opacity .2s; }
 
+/* ── MANGA SAMPLE（縦並びページ） ── */
+.manga-sample {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; margin: 1.5em 0;
+}
+.manga-sample img {
+  width: 100%; max-width: 640px;
+  display: block; margin: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,.22);
+  cursor: zoom-in;
+}
+
+/* ── MANGA SLIDER ── */
+.manga-slider { position: relative; margin: 1.5em 0; }
+.ms-track {
+  display: flex; gap: 6px;
+  overflow-x: hidden; scroll-behavior: smooth;
+}
+.ms-track img {
+  flex: 0 0 calc(50% - 3px);
+  height: 400px; object-fit: cover; object-position: top center;
+  margin: 0; border-radius: 2px; cursor: zoom-in;
+}
+.ms-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 2; background: rgba(0,0,0,.55); color: #fff;
+  border: none; width: 38px; height: 70px; font-size: 26px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  border-radius: 3px; transition: background .15s; line-height: 1;
+}
+.ms-btn:hover { background: rgba(0,0,0,.82); }
+.ms-btn:disabled { opacity: .18; cursor: default; pointer-events: none; }
+.ms-prev { left: 0; }
+.ms-next { right: 0; }
+.ms-count {
+  text-align: center; font-size: 11px; color: var(--muted, #888);
+  margin-top: 5px; letter-spacing: .08em;
+}
+
 /* ライトボックス */
 .lb-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.92);

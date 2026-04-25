@@ -70,6 +70,11 @@ summaryLength = 70
   name = "BIGGYM"
   url  = "https://www.biggym.co.jp/bg-online/all-doujinshi/"
 
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
 [taxonomies]
   category = "categories"
   tag      = "tags"

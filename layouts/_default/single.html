@@ -26,8 +26,56 @@
       </div>
 
       <script>
+      // Manga slider
+      document.querySelectorAll('.manga-slider').forEach(function(slider) {
+        var track = slider.querySelector('.ms-track');
+        var prev  = slider.querySelector('.ms-prev');
+        var next  = slider.querySelector('.ms-next');
+        var imgs  = track.querySelectorAll('img');
+        var total = imgs.length;
+
+        // カウンター要素を動的生成
+        var countEl = document.createElement('div');
+        countEl.className = 'ms-count';
+        slider.appendChild(countEl);
+
+        function imgWidth() {
+          return imgs[0] ? imgs[0].offsetWidth + 6 : track.clientWidth / 2;
+        }
+        function currentIndex() {
+          return Math.round(track.scrollLeft / imgWidth());
+        }
+        function updateUI() {
+          var i = currentIndex();
+          prev.disabled = i === 0;
+          next.disabled = i >= total - 2;
+          countEl.textContent = (i + 1) + '–' + Math.min(i + 2, total) + ' / ' + total;
+        }
+        prev.addEventListener('click', function() {
+          track.scrollBy({ left: -imgWidth(), behavior: 'smooth' });
+        });
+        next.addEventListener('click', function() {
+          track.scrollBy({ left: imgWidth(), behavior: 'smooth' });
+        });
+        track.addEventListener('scroll', updateUI, { passive: true });
+        updateUI();
+
+        // lightbox も適用
+        imgs.forEach(function(img) {
+          img.addEventListener('click', function() {
+            var ov = document.createElement('div');
+            ov.className = 'lb-overlay';
+            ov.innerHTML = '<span class="lb-close">×</span><img src="' + img.src + '" alt="">';
+            ov.addEventListener('click', function(){ ov.remove(); });
+            document.body.appendChild(ov);
+          });
+        });
+      });
+      </script>
+
+      <script>
       // Gallery + Doujin + Thumb lightbox
-      document.querySelectorAll('.gallery img, .doujin-cover-wrap img, .doujin-pages-track img, .thumb-img').forEach(function(img){
+      document.querySelectorAll('.gallery img, .manga-sample img, .doujin-cover-wrap img, .doujin-pages-track img, .thumb-img').forEach(function(img){
         img.addEventListener('click', function(){
           var ov = document.createElement('div');
           ov.className = 'lb-overlay';
