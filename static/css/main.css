@@ -60,19 +60,45 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 
 /* ── HERO ── */
 .hero {
-  background: #1a1a2e;
+  /* 画像を右側に高さいっぱいで配置。左の空白はグラデーションで自然に繋ぐ */
+  background-color: #1a1a2e;
+  background-image: url('/images/hero-header.jpg');
+  background-size: auto 100%;
+  background-position: right center;
+  background-repeat: no-repeat;
   position: relative; overflow: hidden;
   height: 300px; display: flex; align-items: flex-end;
+}
+/* 左→右グラデーション：左は完全不透明（テキスト可読）→ 右は透けて画像が見える */
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to right,
+    #1a1a2e        0%,
+    #1a1a2e        38%,
+    rgba(26,26,46,.85) 52%,
+    rgba(26,26,46,.35) 72%,
+    rgba(26,26,46,.10) 100%
+  );
+  z-index: 0;
+}
+/* 画像左端を自然にフェードさせる縦グラデーション（底部を少し暗く） */
+.hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(26,26,46,.5) 0%, transparent 50%);
+  z-index: 0;
 }
 .hero-bg-lines {
   position: absolute; inset: 0;
   background:
-    linear-gradient(135deg, transparent 40%, rgba(47,154,160,.08) 40%, rgba(47,154,160,.08) 41%, transparent 41%),
-    linear-gradient(135deg, transparent 55%, rgba(77,194,165,.05) 55%, rgba(77,194,165,.05) 56%, transparent 56%);
+    linear-gradient(135deg, transparent 40%, rgba(47,154,160,.06) 40%, rgba(47,154,160,.06) 41%, transparent 41%),
+    linear-gradient(135deg, transparent 55%, rgba(77,194,165,.04) 55%, rgba(77,194,165,.04) 56%, transparent 56%);
 }
-.hero-bar  { position: absolute; top:0; left:180px; width:4px; height:100%; background:var(--accent); opacity:.9; }
-.hero-bar2 { position: absolute; top:0; left:192px; width:2px; height:100%; background:var(--accent2); opacity:.5; }
-.hero-content { position: relative; z-index:1; padding: 0 48px 36px; }
+.hero-bar  { position: absolute; top:0; left:180px; width:4px; height:100%; background:var(--accent); opacity:.9; z-index:3; }
+.hero-bar2 { position: absolute; top:0; left:192px; width:2px; height:100%; background:var(--accent2); opacity:.5; z-index:3; }
+.hero-content { position: relative; z-index:3; padding: 0 48px 36px; }
 .hero-eyebrow {
   font-size: 10px; letter-spacing: .2em;
   color: var(--accent); margin-bottom: 8px; text-transform: uppercase;
@@ -410,11 +436,22 @@ footer a:hover { color: var(--accent); }
   /* R-18ウィジェットは全幅 */
   .r18-widget { grid-column: 1 / -1; }
 
-  /* ヒーロー */
+  /* ヒーロー：タブレットは左右レイアウト維持・グラデ調整 */
   .hero { height: 240px; }
   .hero-content { padding: 0 24px 28px; }
+  .hero-badge { right: 24px; bottom: 24px; font-size: 12px; padding: 6px 14px; }
   .hero-bar  { left: 100px; }
   .hero-bar2 { left: 110px; }
+  .hero::before {
+    background: linear-gradient(
+      to right,
+      #1a1a2e        0%,
+      #1a1a2e        30%,
+      rgba(26,26,46,.8) 48%,
+      rgba(26,26,46,.25) 70%,
+      rgba(26,26,46,.08) 100%
+    );
+  }
 
   /* ページ余白 */
   .page { padding: 24px 16px; }
@@ -425,29 +462,45 @@ footer a:hover { color: var(--accent); }
   /* ヘッダー */
   .header-inner { height: 48px; padding: 0 12px; gap: 10px; }
   nav a { padding: 0 8px; font-size: 10px; height: 48px; }
-  .logo-text { display: none; }  /* ロゴ文字は非表示、アイコンのみ */
+  .logo-text { display: none; }
   .logo-icon { width: 30px; height: 30px; font-size: 15px; }
 
-  /* ヒーロー */
-  .hero { height: 200px; }
+  /* ヒーロー：スマホは画像を cover で全体表示・上寄せで顔を見せる */
+  .hero {
+    height: 200px;
+    background-size: cover;
+    background-position: top center;
+  }
+  /* 下部を暗くしてテキスト可読性を確保 */
+  .hero::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(26,26,46,.15) 0%,
+      rgba(26,26,46,.50) 55%,
+      rgba(26,26,46,.85) 100%
+    );
+  }
+  .hero::after {
+    background: none;
+  }
   .hero-content { padding: 0 16px 22px; }
   .hero-eyebrow { font-size: 9px; margin-bottom: 5px; }
   .hero-title { font-size: clamp(18px, 5.5vw, 26px); }
-  .hero-sub { font-size: 11px; display: none; }  /* サブテキストは省略 */
+  .hero-sub { display: none; }
+  .hero-badge { display: none; }
   .hero-bar  { left: 60px; }
   .hero-bar2 { left: 68px; }
 
-  /* カード：縦積み */
+  /* カード：縦積み・画像を大きく見せる */
   .card { grid-template-columns: 1fr; }
-  .card-thumb { min-height: 160px; max-height: 220px; }
-  .card-body { padding: 14px 14px 14px; }
+  .card-thumb { min-height: 200px; max-height: 260px; }
+  .card-body { padding: 12px 14px 14px; }
   .card-title { font-size: 14px; }
-  .card-num { font-size: 18px; }
+  .card-num { font-size: 18px; top: 8px; right: 10px; }
 
   /* サイドバー：1カラム */
   .sidebar { grid-template-columns: 1fr; }
   .r18-widget { grid-column: auto; }
-  /* SNSリンク：3列 */
   .social-grid { grid-template-columns: repeat(3, 1fr); }
 
   /* 記事本文 */
@@ -455,13 +508,21 @@ footer a:hover { color: var(--accent); }
   .single-title { font-size: clamp(17px, 5vw, 26px); }
   .single-body { font-size: 13px; }
   .single-body h2 { font-size: 16px; }
+  .single-body img { margin: 1em 0; }
 
   /* 前後記事ナビ */
   .post-nav { grid-template-columns: 1fr; gap: 10px; }
 
   /* 同人誌プレビュー */
   .doujin-pages-track img { height: 240px; }
-  .doujin-cover-wrap img { max-width: 240px; }
+  .doujin-cover-wrap img { max-width: 220px; }
+
+  /* マンガスライダー：1枚ずつ表示 */
+  .ms-track img {
+    flex: 0 0 calc(100% - 80px); /* 矢印ボタン分の余白を確保 */
+    height: 280px;
+  }
+  .ms-btn { width: 32px; height: 56px; font-size: 22px; }
 
   /* ページネーション */
   .pagination a, .pagination span { width: 40px; height: 40px; font-size: 14px; }
@@ -476,6 +537,7 @@ footer a:hover { color: var(--accent); }
   nav a { padding: 0 6px; font-size: 10px; }
   .hero-title { font-size: 17px; }
   .social-grid { grid-template-columns: repeat(3, 1fr); }
-  .card-thumb { max-height: 180px; }
+  .card-thumb { min-height: 180px; max-height: 220px; }
   .doujin-pages-track img { height: 200px; }
+  .ms-track img { height: 240px; }
 }
