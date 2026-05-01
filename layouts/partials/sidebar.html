@@ -13,7 +13,7 @@
       {{ .Site.Params.authorName }}
       <small>{{ .Site.Params.authorNameEn }}</small>
     </p>
-    <p class="profile-desc">{{ .Site.Params.authorBio }}</p>
+    <p class="profile-desc">{{ .Site.Params.authorBio | replaceRE "\n" "<br>" | safeHTML }}</p>
     {{ with .Site.Params.contactEmail }}
     <p class="profile-contact">
       <a href="mailto:{{ . }}">✉ {{ . }}</a>
