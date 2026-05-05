@@ -302,6 +302,7 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
           <button class="md-toolbar-btn" onclick="mdDoujin()" title="表紙＋見本ページのプレビューを挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">📖 同人誌</button>
           <button class="md-toolbar-btn" onclick="mdSlider()" title="横スクロールスライダーとして挿入" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">🎞 スライダー</button>
           <button class="md-toolbar-btn" onclick="mdMangaSample()" title="縦並び見本ページとして挿入（スマホ最適）" style="background:rgba(47,154,160,.1);border-color:var(--accent);color:var(--accent)">📄 見本</button>
+          <button class="md-toolbar-btn" onclick="mdMangaFooter()" title="FANBOX・Fantiaリンクを末尾に挿入" style="background:rgba(156,92,245,.12);border-color:#9c5cf5;color:#9c5cf5">🔗 漫画フッター</button>
           <div class="md-toolbar-right">
             <button class="md-view-btn active" id="view-edit" onclick="setView('edit')">編集</button>
             <button class="md-view-btn" id="view-split" onclick="setView('split')">分割</button>
@@ -736,6 +737,25 @@ function mdWrap(before, after) {
   ta.setRangeText(before + sel + after, start, end, 'select');
   ta.focus();
   onEditorInput();
+}
+
+function mdMangaFooter() {
+  const fanboxUrl = prompt('FANBOX URL（空白でスキップ）\n例: https://higedaihuku.fanbox.cc/posts/12345', '');
+  if (fanboxUrl === null) return;
+  const fantiaUrl = prompt('Fantia URL（空白でスキップ）\n例: https://fantia.jp/posts/12345', '');
+  if (fantiaUrl === null) return;
+
+  let footer = '\n\n別修正バージョン、射精差分はFANBOXにあります！';
+  if (fanboxUrl.trim()) footer += `\n\n[FANBOX](${fanboxUrl.trim()})`;
+  if (fantiaUrl.trim()) footer += `\n\n[Fantia](${fantiaUrl.trim()})`;
+  footer += '\n';
+
+  const ta = document.getElementById('md-editor');
+  const pos = ta.value.length;
+  ta.setRangeText(footer, pos, pos, 'end');
+  ta.focus();
+  onEditorInput();
+  toast('✅ 漫画フッターを挿入しました', '#9c5cf5');
 }
 
 function mdLink() {
