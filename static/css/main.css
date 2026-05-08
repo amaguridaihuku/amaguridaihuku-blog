@@ -99,6 +99,16 @@ nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
 .hero-bar  { position: absolute; top:0; left:180px; width:4px; height:100%; background:var(--accent); opacity:.9; z-index:3; }
 .hero-bar2 { position: absolute; top:0; left:192px; width:2px; height:100%; background:var(--accent2); opacity:.5; z-index:3; }
 .hero-content { position: relative; z-index:3; padding: 0 48px 36px; }
+.hero-site-name {
+  font-size: clamp(42px, 6vw, 72px);
+  font-weight: 900;
+  letter-spacing: .08em;
+  line-height: 1;
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, #fff 0%, var(--accent) 60%, var(--accent2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  text-shadow: none;
+}
 .hero-eyebrow {
   font-size: 10px; letter-spacing: .2em;
   color: var(--accent); margin-bottom: 8px; text-transform: uppercase;
@@ -484,6 +494,7 @@ footer a:hover { color: var(--accent); }
     background: none;
   }
   .hero-content { padding: 0 16px 22px; }
+  .hero-site-name { font-size: clamp(30px, 8vw, 44px); margin-bottom: 8px; }
   .hero-eyebrow { font-size: 9px; margin-bottom: 5px; }
   .hero-title { font-size: clamp(18px, 5.5vw, 26px); }
   .hero-sub { display: none; }
