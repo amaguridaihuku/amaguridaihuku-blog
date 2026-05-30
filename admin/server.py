@@ -5,7 +5,7 @@
 → http://localhost:8888 にアクセス
 """
 
-import json, os, re, cgi, io, mimetypes, subprocess, threading, shlex, shutil
+import json, os, re, cgi, io, mimetypes, subprocess, threading, shlex, shutil, time
 import urllib.request, urllib.error
 from datetime import datetime, timezone, timedelta, date as dateobj
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -290,15 +290,28 @@ class Handler(BaseHTTPRequestHandler):
             for key, endpoint in [
                 ("pages", f"/api/v0/stats/hits?start={start}&end={today}&daily=true&limit=50"),
             ]:
-                try:
-                    url = f"https://{site}.goatcounter.com{endpoint}"
-                    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-                    with urllib.request.urlopen(req, timeout=8) as r:
-                        results[key] = json.loads(r.read())
-                except urllib.error.HTTPError as e:
-                    results[key] = {"error": f"HTTP {e.code}: {e.reason}"}
-                except Exception as e:
-                    results[key] = {"error": str(e)}
+                # GoatCounterは初回アクセスで統計の準備が間に合わず404等を返すことがある
+                # （リロード＋2回目で見られる症状）。少し待って自動リトライする。
+                last_err = None
+                for attempt in range(4):
+                    try:
+                        url = f"https://{site}.goatcounter.com{endpoint}"
+                        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+                        with urllib.request.urlopen(req, timeout=12) as r:
+                            results[key] = json.loads(r.read())
+                        last_err = None
+                        break
+                    except urllib.error.HTTPError as e:
+                        last_err = {"error": f"HTTP {e.code}: {e.reason}"}
+                        # 404/5xx は準備待ちのことがあるのでリトライ。401/403は権限なので即中断。
+                        if e.code in (401, 403):
+                            break
+                        time.sleep(1.5)
+                    except Exception as e:
+                        last_err = {"error": str(e)}
+                        time.sleep(1.5)
+                if last_err is not None:
+                    results[key] = last_err
             self._json(results)
 
         elif path == "/api/pick-image":
