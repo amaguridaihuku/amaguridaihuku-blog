@@ -125,6 +125,28 @@ def parse_post(path: Path) -> dict:
         "body":       body,
     }
 
+def shortlink_id(existing_file):
+    """短縮リンク /p/<n> の連番を決める。
+    既存記事の編集ならその番号を維持、新規なら（全記事の最大+1）を採番する。"""
+    # 編集中の記事に既にエイリアスがあれば、それを維持
+    if existing_file:
+        p = POSTS_DIR / existing_file
+        if p.exists():
+            m = re.search(r'/p/(\d+)/', p.read_text(encoding="utf-8", errors="ignore"))
+            if m:
+                return int(m.group(1))
+    # 無ければ全記事の最大id+1
+    max_id = 0
+    for f in POSTS_DIR.glob("*.md"):
+        try:
+            m = re.search(r'/p/(\d+)/', f.read_text(encoding="utf-8", errors="ignore"))
+            if m:
+                max_id = max(max_id, int(m.group(1)))
+        except Exception:
+            pass
+    return max_id + 1
+
+
 def write_post(data: dict) -> Path:
     title     = data.get("title", "").replace('"', '\\"')
     date_str  = data.get("date") or datetime.now(JST).strftime("%Y-%m-%dT%H:%M:%S+09:00")
@@ -140,7 +162,11 @@ def write_post(data: dict) -> Path:
     thumb_yaml = f'\nthumbnail: "{thumbnail}"' if thumbnail else ""
     r18_yaml  = f"\nr18: {r18}" if data.get("r18") else ""
 
-    fm = f'---\ntitle: "{title}"\ndate: {date_str}\ndraft: {draft}{cats_yaml}{tags_yaml}{thumb_yaml}{r18_yaml}\n---\n\n{body}'
+    # 短縮リンク用の連番エイリアス（新規は採番・編集は番号維持）
+    pid = shortlink_id(data.get("file"))
+    aliases_yaml = f'\naliases:\n  - "/p/{pid}/"'
+
+    fm = f'---\ntitle: "{title}"\ndate: {date_str}\ndraft: {draft}{aliases_yaml}{cats_yaml}{tags_yaml}{thumb_yaml}{r18_yaml}\n---\n\n{body}'
 
     # filename
     fname = data.get("file")
