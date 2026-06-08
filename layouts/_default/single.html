@@ -25,6 +25,33 @@
         {{ .Content }}
       </div>
 
+      {{ /* 短縮リンク（/p/<連番>）でのSNSシェアボタン */ }}
+      {{ $short := "" }}
+      {{ range .Aliases }}{{ if hasPrefix . "/p/" }}{{ $short = . }}{{ end }}{{ end }}
+      {{ if $short }}
+      {{ $u := $short | absURL }}
+      <style>
+      .share-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 4px;}
+      .share-row .share-label{font-size:.9em;color:#888;margin-right:2px;}
+      .share-btn{display:inline-flex;align-items:center;gap:5px;font-size:.85em;line-height:1;
+        padding:8px 14px;border-radius:999px;border:1px solid #ddd;background:#fff;color:#333;
+        text-decoration:none;cursor:pointer;transition:all .15s;}
+      .share-btn:hover{filter:brightness(.95);}
+      .share-btn.x{background:#000;color:#fff;border-color:#000;}
+      .share-btn.bsky{background:#1185fe;color:#fff;border-color:#1185fe;}
+      .share-btn.copy{font-weight:600;}
+      </style>
+      <div class="share-row">
+        <span class="share-label">シェア:</span>
+        <a class="share-btn x" target="_blank" rel="noopener"
+           href="https://twitter.com/intent/tweet?{{ querify "text" .Title "url" $u }}">𝕏 でシェア</a>
+        <a class="share-btn bsky" target="_blank" rel="noopener"
+           href="https://bsky.app/intent/compose?{{ querify "text" (printf "%s %s" .Title $u) }}">Bluesky でシェア</a>
+        <button class="share-btn copy" type="button" data-url="{{ $u }}"
+           onclick="navigator.clipboard.writeText(this.dataset.url).then(()=>{var t=this.textContent;this.textContent='✓ コピーしました';setTimeout(()=>{this.textContent=t;},1500);})">🔗 リンクをコピー</button>
+      </div>
+      {{ end }}
+
       <script>
       // Manga slider
       document.querySelectorAll('.manga-slider').forEach(function(slider) {
