@@ -1,0 +1,15 @@
+{{- /* 外部リンク（自サイト以外のhttp/httpsリンク）は新しいタブで開く */ -}}
+{{- $dest := .Destination -}}
+{{- $external := false -}}
+{{- with urls.Parse $dest -}}
+  {{- if .Host -}}
+    {{- $siteHost := (urls.Parse site.BaseURL).Host -}}
+    {{- if ne .Host $siteHost -}}
+      {{- $external = true -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+<a href="{{ $dest | safeURL }}"
+  {{- with .Title }} title="{{ . }}"{{ end -}}
+  {{- if $external }} target="_blank" rel="noopener noreferrer"{{ end -}}
+>{{ .Text | safeHTML }}</a>
