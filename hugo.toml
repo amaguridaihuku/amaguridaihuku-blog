@@ -79,3 +79,4 @@ summaryLength = 70
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
+      hardWraps = true
