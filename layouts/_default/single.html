@@ -25,7 +25,7 @@
         {{ .Content }}
       </div>
 
-      {{ /* 短縮リンク（/p/<連番>）でのSNSシェアボタン */ }}
+      {{/* 短縮リンク /p/<連番> でのSNSシェアボタン */}}
       {{ $short := "" }}
       {{ range .Aliases }}{{ if hasPrefix . "/p/" }}{{ $short = . }}{{ end }}{{ end }}
       {{ if $short }}
@@ -44,9 +44,9 @@
       <div class="share-row">
         <span class="share-label">シェア:</span>
         <a class="share-btn x" target="_blank" rel="noopener"
-           href="https://twitter.com/intent/tweet?{{ querify "text" .Title "url" $u }}">𝕏 でシェア</a>
+           href="{{ printf "https://twitter.com/intent/tweet?%s" (querify "text" .Title "url" $u) | safeURL }}">𝕏 でシェア</a>
         <a class="share-btn bsky" target="_blank" rel="noopener"
-           href="https://bsky.app/intent/compose?{{ querify "text" (printf "%s %s" .Title $u) }}">Bluesky でシェア</a>
+           href="{{ printf "https://bsky.app/intent/compose?%s" (querify "text" (printf "%s %s" .Title $u)) | safeURL }}">Bluesky でシェア</a>
         <button class="share-btn copy" type="button" data-url="{{ $u }}"
            onclick="navigator.clipboard.writeText(this.dataset.url).then(()=>{var t=this.textContent;this.textContent='✓ コピーしました';setTimeout(()=>{this.textContent=t;},1500);})">🔗 リンクをコピー</button>
       </div>
