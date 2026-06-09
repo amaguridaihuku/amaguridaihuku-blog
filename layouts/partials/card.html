@@ -23,7 +23,7 @@
     {{ else }}
       <span class="card-thumb-label">{{ $cat }}</span>
     {{ end }}
-    {{ if $post.Params.r18 }}<span class="card-r18">R-18</span>{{ end }}
+    {{/* {{ if $post.Params.r18 }}<span class="card-r18">R-18</span>{{ end }} 一時的に非表示 */}}
   </a>
   <div class="card-body">
     <span class="card-num">{{ printf "%02d" $i }}</span>
