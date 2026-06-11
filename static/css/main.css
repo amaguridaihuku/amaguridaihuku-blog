@@ -568,7 +568,8 @@ footer a:hover { color: var(--yellow); }
   .hero { margin-top: 18px; }
   .hero-site-name {
     font-size: clamp(32px, 9vw, 48px);
-    padding: 26px 10px;
+    align-items: flex-start;
+    padding: 18px 10px 40px 16px;
     text-shadow: 3px 3px 0 rgba(0,0,0,.6), 0 0 20px rgba(0,0,0,.4);
     box-shadow: var(--shadow);
   }
