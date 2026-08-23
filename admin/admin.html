@@ -163,7 +163,17 @@ nav button:hover,nav button.active{color:#fff;border-bottom-color:var(--accent)}
 .chart-bar{width:100%;background:var(--accent);min-height:2px;transition:height .4s ease;border-radius:2px 2px 0 0;opacity:.85}
 .chart-col.today .chart-bar{opacity:1;background:var(--accent)}
 .chart-label{position:absolute;bottom:20px;font-size:11px;font-weight:700;color:var(--text)}
-.chart-date{position:absolute;bottom:4px;font-size:9px;color:var(--muted)}
+.chart-label.sun{color:#e03a3a}
+.chart-date{position:absolute;bottom:4px;font-size:9px;color:var(--muted);white-space:nowrap}
+.chart-col[title]{cursor:default}
+.chart-col:hover .chart-bar{opacity:1}
+/* 期間切り替えバー */
+.period-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.period-btn{padding:6px 14px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;font-weight:700;cursor:pointer}
+.period-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.period-select{padding:6px 10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px}
+.period-now{font-size:12px;color:var(--muted)}
+.period-note{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
 .pages-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
 .pages-table th{text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
 .pages-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
@@ -1102,10 +1112,40 @@ async function saveEvents() {
 }
 
 // ── Analytics ─────────────────────────────────────────────────────────────
+const DOW_JP = ['日','月','火','水','木','金','土'];
+
+// 'YYYY-MM-DD' → ローカル日付（new Date('...') のUTC解釈による日付ズレを避ける）
+function ymdToDate(key) {
+  const [y,m,d] = key.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function fmtYmdLocal(dt) {
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+// 「2026年8月14日(木)」
+function fmtJPDate(key) {
+  const d = ymdToDate(key);
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${DOW_JP[d.getDay()]})`;
+}
+
+// 選択中の期間（null = 過去30日）
+let analyticsRange = null;
+
+function selectAnalyticsMonth(ym) {
+  if (!ym) { analyticsRange = null; loadAnalytics(); return; }
+  const [y,m] = ym.split('-').map(Number);
+  const start = new Date(y, m-1, 1);
+  const end   = new Date(y, m, 0);          // その月の末日
+  const today = new Date(); today.setHours(0,0,0,0);
+  analyticsRange = { start: fmtYmdLocal(start), end: fmtYmdLocal(end > today ? today : end), label: `${y}年${m}月` };
+  loadAnalytics();
+}
+
 async function loadAnalytics() {
   const el = document.getElementById('analytics-content');
   el.innerHTML = '<div class="analytics-loading">データを取得中…</div>';
-  const res  = await fetch('/api/analytics');
+  const q = analyticsRange ? `?start=${analyticsRange.start}&end=${analyticsRange.end}` : '';
+  const res  = await fetch('/api/analytics' + q);
   const data = await res.json();
 
   if (!data.configured) {
@@ -1126,56 +1166,77 @@ async function loadAnalytics() {
 
   const hits = (data.pages && data.pages.hits) || [];
 
-  // Build day map (aggregate across all pages)
+  // 日別合計（サーバーが /stats/total から取得したサイト全体の数）
   const dayMap = {};
-  hits.forEach(page => {
-    (page.stats || []).forEach(s => {
-      // GoatCounter は s.daily（またはフォールバックで s.count）に日別数を入れる
-      const n = s.daily ?? s.count ?? 0;
-      dayMap[s.day] = (dayMap[s.day] || 0) + n;
-    });
-  });
+  (data.daily || []).forEach(d => { dayMap[d.day] = d.count; });
 
-  // Last 30 days array
-  const DOW = ['日','月','火','水','木','金','土'];
+  // 表示する日の配列を start〜end から作る
+  const startD = ymdToDate(data.start), endD = ymdToDate(data.end);
+  const todayKey = fmtYmdLocal(new Date());
   const days = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0,10);
-    const label = (i % 7 === 0 || i === 0) ? DOW[d.getDay()] : '';
-    days.push({key, label, count: dayMap[key] || 0, isToday: i===0});
+  for (let d = new Date(startD); d <= endD; d.setDate(d.getDate()+1)) {
+    const key = fmtYmdLocal(d);
+    days.push({
+      key,
+      dow:     DOW_JP[d.getDay()],
+      isSun:   d.getDay() === 0,
+      md:      `${d.getMonth()+1}/${d.getDate()}`,
+      count:   dayMap[key] || 0,
+      isToday: key === todayKey,
+    });
   }
-  const todayCount = days[days.length-1].count;
-  const weekTotal  = days.slice(-7).reduce((s,d) => s+d.count, 0);
-  const monthTotal = days.reduce((s,d) => s+d.count, 0);
-  const maxCount   = Math.max(...days.map(d => d.count), 1);
+
+  const periodTotal = days.reduce((s,d) => s+d.count, 0);
+  const todayCount  = (days.find(d => d.isToday) || {}).count || 0;
+  const last7       = days.slice(-7).reduce((s,d) => s+d.count, 0);
+  const maxCount    = Math.max(...days.map(d => d.count), 1);
+  const avg         = days.length ? Math.round(periodTotal / days.length) : 0;
+  const best        = days.reduce((a,b) => b.count > a.count ? b : a, days[0] || {count:0});
+
+  const isMonthView = !!analyticsRange;
+  const periodLabel = isMonthView
+    ? `${analyticsRange.label}（${fmtJPDate(data.start)} 〜 ${fmtJPDate(data.end)}）`
+    : `過去30日間（${fmtJPDate(data.start)} 〜 ${fmtJPDate(data.end)}）`;
 
   // Top pages
   const topPages = [...hits].sort((a,b) => b.count - a.count).slice(0,10);
   const siteUrl  = (await (await fetch('/api/settings')).json()).baseURL || '';
 
   el.innerHTML = `
-    <h2>アクセス統計（過去30日間）</h2>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-number">${todayCount}</div><div class="stat-label">今日</div></div>
-      <div class="stat-card"><div class="stat-number">${weekTotal}</div><div class="stat-label">直近7日</div></div>
-      <div class="stat-card"><div class="stat-number">${monthTotal}</div><div class="stat-label">30日間合計</div></div>
+    <div class="period-bar">
+      <button class="period-btn${isMonthView?'':' on'}" onclick="selectAnalyticsMonth(null)">過去30日</button>
+      <select class="period-select" id="month-select" onchange="selectAnalyticsMonth(this.value)">
+        <option value="">▼ 月を選ぶ</option>
+      </select>
+      <span class="period-now">${periodLabel}</span>
     </div>
 
-    <h2>日別アクセス（過去30日）</h2>
+    <h2>アクセス統計</h2>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-number">${periodTotal}</div><div class="stat-label">${isMonthView ? 'この月の合計' : '30日間合計'}</div></div>
+      <div class="stat-card"><div class="stat-number">${isMonthView ? avg : todayCount}</div><div class="stat-label">${isMonthView ? '1日あたり平均' : '今日'}</div></div>
+      <div class="stat-card"><div class="stat-number">${isMonthView ? (best.count||0) : last7}</div><div class="stat-label">${isMonthView ? `最多の日（${best.md||'-'}）` : '直近7日'}</div></div>
+    </div>
+
+    <h2>日別アクセス</h2>
     <div class="chart-section">
-      <div class="chart" style="gap:3px">
+      <div class="chart" style="gap:3px;padding-bottom:52px">
         ${days.map(d => `
-          <div class="chart-col${d.isToday?' today':''}">
+          <div class="chart-col${d.isToday?' today':''}" title="${fmtJPDate(d.key)} ： ${d.count} PV">
             <div class="chart-count" style="font-size:9px">${d.count||''}</div>
             <div class="chart-bar-wrap"><div class="chart-bar" style="height:${Math.round(d.count/maxCount*100)}%"></div></div>
-            <div class="chart-label" style="font-size:10px">${d.label}</div>
-            <div class="chart-date" style="font-size:8px">${d.label ? d.key.slice(5) : ''}</div>
+            <div class="chart-label${d.isSun?' sun':''}" style="font-size:9px;bottom:22px">${d.dow}</div>
+            <div class="chart-date" style="font-size:9px">${d.md}</div>
           </div>`).join('')}
       </div>
     </div>
 
-    <h2>よく見られているページ</h2>
+    <h2>月別アクセス推移</h2>
+    <div class="chart-section" id="months-chart">
+      <div class="analytics-loading" style="padding:24px">月別データを取得中…</div>
+    </div>
+
+    <h2>よく見られているページ<span class="period-note">（${periodLabel}）</span></h2>
     <table class="pages-table">
       <thead><tr><th>ページ</th><th style="text-align:right">表示回数</th></tr></thead>
       <tbody>
@@ -1186,6 +1247,67 @@ async function loadAnalytics() {
           </tr>`).join('') : '<tr><td colspan="2" style="padding:20px;text-align:center;color:var(--muted)">まだデータがありません</td></tr>'}
       </tbody>
     </table>
+  `;
+
+  // 月別データは別リクエスト（少し時間がかかるので本体を先に表示する）
+  loadMonths();
+}
+
+// ── 月別アクセス推移 ───────────────────────────────────────────────────────
+let monthsCache = null;
+
+async function loadMonths() {
+  const box = document.getElementById('months-chart');
+  const sel = document.getElementById('month-select');
+  try {
+    if (!monthsCache) {
+      const r = await fetch('/api/analytics/months?months=12');
+      monthsCache = await r.json();
+    }
+  } catch (e) {
+    if (box) box.innerHTML = '<p style="color:var(--muted);font-size:12px">月別データを取得できませんでした</p>';
+    return;
+  }
+  const months = (monthsCache && monthsCache.months) || [];
+
+  // 月セレクトを埋める（データがある月だけ／新しい順）
+  if (sel) {
+    const cur = analyticsRange ? analyticsRange.start.slice(0,7) : '';
+    sel.innerHTML = '<option value="">▼ 月を選ぶ</option>' + [...months].reverse().map(m => {
+      const [y,mm] = m.month.split('-');
+      return `<option value="${m.month}"${m.month===cur?' selected':''}>${y}年${Number(mm)}月（${m.count}）</option>`;
+    }).join('');
+  }
+
+  if (!box) return;
+  if (monthsCache.error) {
+    box.innerHTML = `<p style="color:var(--muted);font-size:12px">月別データの取得エラー: ${monthsCache.error}</p>`;
+    return;
+  }
+  if (!months.length) {
+    box.innerHTML = '<p style="color:var(--muted);font-size:12px">まだデータがありません</p>';
+    return;
+  }
+
+  const maxM    = Math.max(...months.map(m => m.count), 1);
+  const curYm   = analyticsRange ? analyticsRange.start.slice(0,7) : '';
+  const thisYm  = fmtYmdLocal(new Date()).slice(0,7);
+  box.innerHTML = `
+    <div class="chart" style="gap:6px;height:150px;padding-bottom:34px">
+      ${months.map(m => {
+        const [y,mm] = m.month.split('-');
+        const isCur  = m.month === curYm;
+        return `
+        <div class="chart-col${isCur?' today':''}" style="cursor:pointer"
+             title="${y}年${Number(mm)}月 ： ${m.count} PV${m.month===thisYm?'（今月・途中）':''}"
+             onclick="selectAnalyticsMonth('${m.month}')">
+          <div class="chart-count" style="font-size:10px">${m.count||''}</div>
+          <div class="chart-bar-wrap"><div class="chart-bar" style="height:${Math.round(m.count/maxM*100)}%"></div></div>
+          <div class="chart-date" style="font-size:10px">${Number(mm)}月${m.month===thisYm?'*':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:6px">棒をクリックするとその月の日別データを表示します（* は今月＝集計途中）</p>
   `;
 }
 

@@ -23,6 +23,40 @@ ADMIN_HTML  = Path(__file__).parent / "admin.html"
 PORT        = 8888
 JST         = timezone(timedelta(hours=9))
 
+# 月別集計のキャッシュ {(site, start, end): (取得時刻, データ)}
+MONTHS_CACHE = {}
+
+def parse_ymd(s):
+    """'YYYY-MM-DD' を date にする。空・不正なら None。"""
+    try:
+        return datetime.strptime((s or "").strip(), "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+def goatcounter_get(site, token, endpoint, timeout=12):
+    """GoatCounter APIを叩く。戻り値 (データ, エラー) のどちらか一方が None。
+
+    GoatCounterは初回アクセスで統計の準備が間に合わず404等を返すことがある
+    （リロード＋2回目で見られる症状）。少し待って自動リトライする。
+    """
+    last_err = None
+    for _ in range(4):
+        try:
+            url = f"https://{site}.goatcounter.com{endpoint}"
+            req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read()), None
+        except urllib.error.HTTPError as e:
+            last_err = {"error": f"HTTP {e.code}: {e.reason}"}
+            # 404/5xx は準備待ちのことがあるのでリトライ。401/403は権限なので即中断。
+            if e.code in (401, 403):
+                break
+            time.sleep(1.5)
+        except Exception as e:
+            last_err = {"error": str(e)}
+            time.sleep(1.5)
+    return None, last_err
+
 def find_logo():
     for ext in ("png", "jpg", "gif"):
         p = LOGO_DIR / f"logo.{ext}"
@@ -309,36 +343,104 @@ class Handler(BaseHTTPRequestHandler):
             if not site or not token:
                 self._json({"configured": False})
                 return
+
             today = datetime.now(JST).date()
-            start = today - timedelta(days=29)
-            results = {"configured": True}
-            # daily hits per page (past 30 days)
-            for key, endpoint in [
-                ("pages", f"/api/v0/stats/hits?start={start}&end={today}&daily=true&limit=50"),
-            ]:
-                # GoatCounterは初回アクセスで統計の準備が間に合わず404等を返すことがある
-                # （リロード＋2回目で見られる症状）。少し待って自動リトライする。
-                last_err = None
-                for attempt in range(4):
-                    try:
-                        url = f"https://{site}.goatcounter.com{endpoint}"
-                        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-                        with urllib.request.urlopen(req, timeout=12) as r:
-                            results[key] = json.loads(r.read())
-                        last_err = None
-                        break
-                    except urllib.error.HTTPError as e:
-                        last_err = {"error": f"HTTP {e.code}: {e.reason}"}
-                        # 404/5xx は準備待ちのことがあるのでリトライ。401/403は権限なので即中断。
-                        if e.code in (401, 403):
-                            break
-                        time.sleep(1.5)
-                    except Exception as e:
-                        last_err = {"error": str(e)}
-                        time.sleep(1.5)
-                if last_err is not None:
-                    results[key] = last_err
+            # 表示期間（?start=YYYY-MM-DD&end=YYYY-MM-DD）。省略時は過去30日。
+            start = parse_ymd(qs.get("start", [""])[0]) or (today - timedelta(days=29))
+            end   = parse_ymd(qs.get("end",   [""])[0]) or today
+            if end   > today: end   = today
+            if start > end:   start = end
+
+            results = {"configured": True, "start": str(start), "end": str(end)}
+
+            # GoatCounterのstart/endはUTC基準で区切られるため、JSTだと範囲の
+            # 「最初の日」と「最後の日」が9時間ぶん欠ける（例：7月単独で取ると
+            # 7/1が66、前後を含めて取ると75）。前後1日ぶん広く取得してから
+            # 表示範囲だけ切り出すことで、どの期間で見ても同じ数になるようにする。
+            pad_start = start - timedelta(days=1)
+            pad_end   = end   + timedelta(days=1)
+            in_range  = lambda d: d and str(start) <= d <= str(end)
+
+            # ページ別（期間内）
+            pages, err = goatcounter_get(
+                site, token,
+                f"/api/v0/stats/hits?start={pad_start}&end={pad_end}&daily=true&limit=50")
+            if err:
+                results["pages"] = err
+            else:
+                trimmed = []
+                for p in (pages.get("hits") or []):
+                    stats = [s for s in (p.get("stats") or []) if in_range(s.get("day"))]
+                    count = sum(s.get("daily") or 0 for s in stats)
+                    if count <= 0:
+                        continue
+                    q = dict(p)
+                    q["stats"], q["count"] = stats, count
+                    trimmed.append(q)
+                results["pages"] = {"hits": trimmed}
+
+            # 日別合計（サイト全体。上位50ページの合算では取りこぼすため total を使う）
+            totals, err2 = goatcounter_get(
+                site, token,
+                f"/api/v0/stats/total?start={pad_start}&end={pad_end}")
+            if err2:
+                results["daily"] = []
+            else:
+                results["daily"] = [
+                    {"day": s.get("day"), "count": s.get("daily") or 0}
+                    for s in (totals.get("stats") or []) if in_range(s.get("day"))
+                ]
             self._json(results)
+
+        elif path == "/api/analytics/months":
+            # 月別アクセス推移（既定：直近12ヶ月）。1回のAPI呼び出しで取れるが
+            # 2秒ほどかかるので、短時間キャッシュして開き直しを軽くする。
+            cfg = load_settings()
+            site  = cfg.get("goatcounterSite", "").strip()
+            token = cfg.get("goatcounterToken", "").strip()
+            if not site or not token:
+                self._json({"configured": False})
+                return
+
+            try:
+                months_back = max(1, min(36, int(qs.get("months", ["12"])[0])))
+            except ValueError:
+                months_back = 12
+
+            today = datetime.now(JST).date()
+            first = today.replace(day=1)
+            for _ in range(months_back - 1):          # months_back ヶ月前の1日まで戻る
+                first = (first - timedelta(days=1)).replace(day=1)
+
+            cache_key = (site, str(first), str(today))
+            cached = MONTHS_CACHE.get(cache_key)
+            if cached and time.time() - cached[0] < 600:   # 10分
+                self._json(cached[1])
+                return
+
+            # 端の日が欠けないよう前後1日ぶん広く取り、表示範囲だけ集計する
+            totals, err = goatcounter_get(
+                site, token,
+                f"/api/v0/stats/total?start={first - timedelta(days=1)}"
+                f"&end={today + timedelta(days=1)}", timeout=40)
+            if err:
+                self._json({"configured": True, "error": err["error"], "months": []})
+                return
+
+            agg = {}
+            for s in (totals.get("stats") or []):
+                day = s.get("day") or ""
+                if not (str(first) <= day <= str(today)):
+                    continue
+                ym = day[:7]
+                if ym:
+                    agg[ym] = agg.get(ym, 0) + (s.get("daily") or 0)
+            payload = {
+                "configured": True,
+                "months": [{"month": m, "count": agg[m]} for m in sorted(agg)],
+            }
+            MONTHS_CACHE[cache_key] = (time.time(), payload)
+            self._json(payload)
 
         elif path == "/api/pick-image":
             multiple = qs.get("multiple", ["false"])[0] == "true"
